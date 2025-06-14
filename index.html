@@ -322,6 +322,43 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        .modal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1001; /* Sit on top */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto; /* Enable scroll if needed */
+            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; /* 10% from the top and centered */
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%; /* Could be more or less, depending on screen size */
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close-btn:hover,
+        .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -372,7 +409,7 @@
         </section>
 
         <section id="recipeFormSection" class="hidden">
-            <h2 class="section-title">Neues Rezept hinzufügen</h2>
+            <h2 class="section-title" id="recipeFormTitle">Neues Rezept hinzufügen</h2>
             <div class="recipe-form">
                 <div class="form-group">
                     <label for="recipeTitle">Rezeptname</label>
@@ -396,6 +433,21 @@
             </div>
         </section>
     </main>
+
+    <div id="recipeDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
+            <h2 id="modalRecipeTitle"></h2>
+            <img id="modalRecipeImage" src="" alt="Recipe Image" style="width: 100%; max-height: 300px; object-fit: cover; margin-bottom: 20px;">
+            <h3>Zutaten:</h3>
+            <div id="modalRecipeIngredients" style="margin-bottom: 20px;"></div>
+            <h3>Zubereitung:</h3>
+            <div id="modalRecipeInstructions" style="margin-bottom: 20px;"></div>
+            <button id="modalEditRecipeBtn" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Bearbeiten
+            </button>
+        </div>
+    </div>
     
     <footer>
         <div class="container">
@@ -453,6 +505,45 @@
         const emptyState = document.getElementById('emptyState');
         const saveRecipeBtn = document.getElementById('saveRecipeBtn');
         const notification = document.getElementById('notification');
+        const recipeDetailModal = document.getElementById('recipeDetailModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalRecipeTitle = document.getElementById('modalRecipeTitle');
+        const modalRecipeImage = document.getElementById('modalRecipeImage');
+        const modalRecipeIngredients = document.getElementById('modalRecipeIngredients');
+        const modalRecipeInstructions = document.getElementById('modalRecipeInstructions');
+        const modalEditRecipeBtn = document.getElementById('modalEditRecipeBtn');
+        // recipeFormTitle is defined after DOM parsing, but needed in functions.
+        // Let's ensure it's either passed or defined globally if checkAuth can call prepareFormForAdd before full DOM ready.
+        // However, this script is at the end of body, so DOM should be ready.
+        // const recipeFormTitle = document.getElementById('recipeFormTitle'); // This would be good if not for ordering.
+
+        // Function to prepare form for adding a new recipe
+        function prepareFormForAdd() {
+            document.getElementById('recipeTitle').value = '';
+            document.getElementById('recipeIngredients').value = '';
+            document.getElementById('recipeInstructions').value = '';
+            document.getElementById('recipeImage').value = '';
+
+            const formTitleEl = document.getElementById('recipeFormTitle');
+            if (formTitleEl) {
+                formTitleEl.textContent = 'Neues Rezept hinzufügen';
+            } else {
+                console.error('recipeFormTitle element not found during prepareFormForAdd');
+            }
+
+            if (saveRecipeBtn) {
+                 saveRecipeBtn.innerHTML = '<i class="fas fa-save"></i> Rezept speichern';
+                 delete saveRecipeBtn.dataset.editingId;
+            } else {
+                 console.error('saveRecipeBtn not found during prepareFormForAdd');
+            }
+
+            if (recipeFormSection) {
+                recipeFormSection.classList.remove('hidden');
+            } else {
+                console.error('recipeFormSection not found during prepareFormForAdd');
+            }
+        }
         
         // Authentifizierungsstatus überprüfen
         async function checkAuth(userFromSignIn = null) {
@@ -481,7 +572,8 @@
                 // Benutzer angemeldet
                 authSection.classList.add('hidden');
                 userSection.classList.remove('hidden');
-                recipeFormSection.classList.remove('hidden');
+                // recipeFormSection.classList.remove('hidden'); // Replaced by prepareFormForAdd
+                prepareFormForAdd(); // Show and reset form for adding new recipe
                 
                 // Benutzerinitialen für Avatar
                 const initials = currentUser.email.substring(0, 1).toUpperCase();
@@ -544,6 +636,9 @@
                         </div>
                     </div>
                     <div class="recipe-actions">
+                        <button class="btn-icon btn-view" data-id="${recipe.id}">
+                            <i class="fas fa-eye"></i>
+                        </button>
                         <button class="btn-icon btn-delete" data-id="${recipe.id}">
                             <i class="fas fa-trash"></i>
                         </button>
@@ -560,6 +655,89 @@
                     deleteRecipe(recipeId);
                 });
             });
+
+            // View-Buttons Event-Listener hinzufügen
+            document.querySelectorAll('.btn-view').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const recipeId = e.currentTarget.getAttribute('data-id');
+                    displayFullRecipe(recipeId);
+                });
+            });
+        }
+
+        // Vollständiges Rezept anzeigen
+        async function displayFullRecipe(recipeId) {
+            const { data: recipe, error } = await supabase
+                .from('recipes')
+                .select('*')
+                .eq('id', recipeId)
+                .single();
+
+            if (error) {
+                showNotification('Fehler beim Laden des Rezepts für die Detailansicht.', 'error');
+                console.error('Error fetching recipe details:', error);
+                return;
+            }
+
+            if (recipe) {
+                modalRecipeTitle.textContent = recipe.title;
+
+                if (recipe.image_url) {
+                    modalRecipeImage.src = recipe.image_url;
+                    modalRecipeImage.style.display = 'block';
+                } else {
+                    modalRecipeImage.src = '';
+                    modalRecipeImage.style.display = 'none';
+                }
+
+                // Zutaten formatieren (Newline-separated to UL)
+                if (recipe.ingredients) {
+                    const ingredientsArray = recipe.ingredients.split('\n').filter(ing => ing.trim() !== '');
+                    modalRecipeIngredients.innerHTML = `<ul>${ingredientsArray.map(ing => `<li>${ing}</li>`).join('')}</ul>`;
+                } else {
+                    modalRecipeIngredients.innerHTML = 'Keine Zutaten angegeben.';
+                }
+
+                // Zubereitung formatieren (Newline to <br>)
+                if (recipe.instructions) {
+                    modalRecipeInstructions.innerHTML = recipe.instructions.replace(/\n/g, '<br>');
+                } else {
+                    modalRecipeInstructions.innerHTML = 'Keine Zubereitungsschritte angegeben.';
+                }
+
+                recipeDetailModal.dataset.currentRecipeId = recipe.id;
+                modalEditRecipeBtn.dataset.recipeId = recipe.id; // Store ID for edit button
+                recipeDetailModal.classList.remove('hidden');
+            }
+        }
+
+        // Formular zum Bearbeiten eines Rezepts vorbereiten
+        function populateFormForEdit(recipe) {
+            document.getElementById('recipeTitle').value = recipe.title;
+            document.getElementById('recipeIngredients').value = recipe.ingredients;
+            document.getElementById('recipeInstructions').value = recipe.instructions;
+            document.getElementById('recipeImage').value = recipe.image_url || '';
+
+            const formTitleEl = document.getElementById('recipeFormTitle');
+            if (formTitleEl) {
+                formTitleEl.textContent = 'Rezept bearbeiten';
+            } else {
+                console.error('recipeFormTitle element not found during populateFormForEdit');
+            }
+
+            if (saveRecipeBtn) {
+                saveRecipeBtn.innerHTML = '<i class="fas fa-save"></i> Änderungen speichern';
+                saveRecipeBtn.dataset.editingId = recipe.id;
+            } else {
+                console.error('saveRecipeBtn not found during populateFormForEdit');
+            }
+
+            if (recipeFormSection) {
+                recipeFormSection.classList.remove('hidden');
+                recipeFormSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.error('recipeFormSection not found during populateFormForEdit');
+            }
         }
         
         // Rezept löschen
@@ -580,42 +758,68 @@
             }
         }
         
-        // Neues Rezept speichern
+        // Neues Rezept speichern / Rezept aktualisieren
         async function saveRecipe() {
             const title = document.getElementById('recipeTitle').value;
             const ingredients = document.getElementById('recipeIngredients').value;
             const instructions = document.getElementById('recipeInstructions').value;
             const imageUrl = document.getElementById('recipeImage').value;
-            
+
+            const editingId = saveRecipeBtn.dataset.editingId;
+
             if (!title || !ingredients || !instructions) {
                 showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
                 return;
             }
-            
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            const { error } = await supabase
-                .from('recipes')
-                .insert([{
-                    title,
-                    ingredients,
-                    instructions,
-                    image_url: imageUrl || null,
-                    user_id: user.id
-                }]);
-            
-            if (error) {
-                showNotification('Fehler beim Speichern des Rezepts', 'error');
-                console.error(error);
+
+            if (editingId) {
+                // Update logic
+                const { error } = await supabase
+                    .from('recipes')
+                    .update({
+                        title,
+                        ingredients,
+                        instructions,
+                        image_url: imageUrl || null
+                    })
+                    .eq('id', editingId);
+
+                if (error) {
+                    showNotification('Fehler beim Aktualisieren des Rezepts', 'error');
+                    console.error('Error updating recipe:', error);
+                } else {
+                    showNotification('Rezept erfolgreich aktualisiert!', 'success');
+                    loadRecipes();
+                    prepareFormForAdd(); // Resets form to "add new" state and makes it visible
+                    recipeFormSection.classList.add('hidden'); // Then hide it after update
+                }
             } else {
-                // Formular zurücksetzen
-                document.getElementById('recipeTitle').value = '';
-                document.getElementById('recipeIngredients').value = '';
-                document.getElementById('recipeInstructions').value = '';
-                document.getElementById('recipeImage').value = '';
-                
-                showNotification('Rezept erfolgreich gespeichert!', 'success');
-                loadRecipes();
+                // Insert logic
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    showNotification('Benutzer nicht angemeldet. Kann Rezept nicht speichern.', 'error');
+                    console.error('User not found for saving recipe:', userError);
+                    return;
+                }
+
+                const { error } = await supabase
+                    .from('recipes')
+                    .insert([{
+                        title,
+                        ingredients,
+                        instructions,
+                        image_url: imageUrl || null,
+                        user_id: user.id
+                    }]);
+
+                if (error) {
+                    showNotification('Fehler beim Speichern des Rezepts', 'error');
+                    console.error('Error inserting recipe:', error);
+                } else {
+                    showNotification('Rezept erfolgreich gespeichert!', 'success');
+                    loadRecipes();
+                    prepareFormForAdd(); // Resets form and keeps it visible for another entry
+                }
             }
         }
         
@@ -679,6 +883,46 @@
         });
         
         saveRecipeBtn.addEventListener('click', saveRecipe);
+
+        // Modal Schließen Event Listeners
+        closeModalBtn.addEventListener('click', () => {
+            recipeDetailModal.classList.add('hidden');
+        });
+
+        recipeDetailModal.addEventListener('click', (event) => {
+            if (event.target === recipeDetailModal) { // Click on backdrop
+                recipeDetailModal.classList.add('hidden');
+            }
+        });
+
+        // Event Listener für Modal Edit Button
+        if (modalEditRecipeBtn) {
+            modalEditRecipeBtn.addEventListener('click', async () => {
+                const recipeId = modalEditRecipeBtn.dataset.recipeId;
+                if (!recipeId) {
+                    showNotification('Fehler: Rezept-ID nicht gefunden für Bearbeitung.', 'error');
+                    console.error('Recipe ID not found on modalEditRecipeBtn dataset.');
+                    return;
+                }
+
+                const { data: recipe, error } = await supabase
+                    .from('recipes')
+                    .select('*')
+                    .eq('id', recipeId)
+                    .single();
+
+                if (error || !recipe) {
+                    showNotification('Fehler beim Abrufen des Rezepts zum Bearbeiten.', 'error');
+                    console.error('Error fetching recipe for edit:', error);
+                    return;
+                }
+
+                populateFormForEdit(recipe);
+                recipeDetailModal.classList.add('hidden'); // Close the modal
+            });
+        } else {
+            console.error('modalEditRecipeBtn not found in the DOM.');
+        }
         
         // Initiale Überprüfung des Authentifizierungsstatus
         checkAuth();
