@@ -405,10 +405,41 @@
     </footer>
 
     <script>
+        console.log('Debug: Supabase script execution started.');
+        console.log('Debug: window.supabase from CDN:', window.supabase);
+        if (typeof window.supabase === 'undefined' || typeof window.supabase.createClient !== 'function') {
+            console.error('CRITICAL: Supabase JS library not loaded or createClient is not a function!');
+            throw new Error('CRITICAL: Supabase JS library not loaded or createClient is not a function!');
+        }
+
         // Supabase Initialisierung
-        const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co'; // Ensure these are the correct values
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw'; // Ensure these are the correct values
+
+        console.log('Debug: Attempting to create Supabase client...');
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey); // Explicitly use window.supabase
+        console.log('Debug: Supabase client instance:', supabase);
+        if (!supabase) {
+            console.error('CRITICAL: Supabase client creation failed! Client object is falsy.');
+            throw new Error('CRITICAL: Supabase client creation failed! Client object is falsy.');
+        }
+        if (typeof supabase.auth === 'undefined') {
+            console.error('CRITICAL: supabase.auth is undefined after client creation.');
+            throw new Error('CRITICAL: supabase.auth is undefined after client creation.');
+        }
+        console.log('Debug: Supabase client creation appears successful. supabase.auth type:', typeof supabase.auth);
+
+        // Auth State Change Listener
+        console.log('Debug: Attempting to set up onAuthStateChange listener...');
+        supabase.auth.onAuthStateChange((event, session) => {
+            console.log('Debug: Auth event:', event, session);
+            if (event === 'SIGNED_IN') {
+                checkAuth(session.user);
+            } else if (event === 'SIGNED_OUT') {
+                checkAuth(null);
+            }
+        });
+        console.log('Debug: onAuthStateChange listener setup complete.');
         
         // DOM Elemente
         const authSection = document.getElementById('authSection');
@@ -424,17 +455,36 @@
         const notification = document.getElementById('notification');
         
         // Authentifizierungsstatus überprüfen
-        async function checkAuth() {
-            const { data: { user }, error } = await supabase.auth.getUser();
+        async function checkAuth(userFromSignIn = null) {
+            let currentUser;
+
+            if (userFromSignIn) {
+                currentUser = userFromSignIn;
+            } else {
+                try {
+                    const { data: { user }, error } = await supabase.auth.getUser();
+                    if (error) {
+                        showNotification('Error checking authentication status.', 'error');
+                        console.error('Error in getUser:', error);
+                        currentUser = null;
+                    } else {
+                        currentUser = user;
+                    }
+                } catch (e) {
+                    showNotification('Unexpected error checking authentication status.', 'error');
+                    console.error('Unexpected error in getUser:', e);
+                    currentUser = null;
+                }
+            }
             
-            if (user) {
+            if (currentUser) {
                 // Benutzer angemeldet
                 authSection.classList.add('hidden');
                 userSection.classList.remove('hidden');
                 recipeFormSection.classList.remove('hidden');
                 
                 // Benutzerinitialen für Avatar
-                const initials = user.email.substring(0, 1).toUpperCase();
+                const initials = currentUser.email.substring(0, 1).toUpperCase();
                 userAvatar.textContent = initials;
                 
                 // Rezepte laden
@@ -444,8 +494,8 @@
                 authSection.classList.remove('hidden');
                 userSection.classList.add('hidden');
                 recipeFormSection.classList.add('hidden');
-                recipesContainer.innerHTML = '';
-                emptyState.classList.remove('hidden');
+                recipesContainer.innerHTML = ''; // Clear existing recipes
+                emptyState.classList.remove('hidden'); // Show empty state
             }
         }
         
@@ -612,7 +662,8 @@
                     showNotification(`Anmeldung fehlgeschlagen: ${error.message}`, 'error');
                 } else {
                     showNotification('Erfolgreich angemeldet!', 'success');
-                    checkAuth();
+                    // Pass the user object directly to checkAuth
+                    checkAuth(data.user);
                 }
             }
         });
