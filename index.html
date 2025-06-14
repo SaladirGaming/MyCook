@@ -200,11 +200,11 @@
                  console.error('saveRecipeBtn not found during prepareFormForAdd');
             }
 
-            if (recipeFormSection) {
-                recipeFormSection.classList.remove('hidden');
-            } else {
-                console.error('recipeFormSection not found during prepareFormForAdd');
-            }
+            // if (recipeFormSection) { // Line removed - visibility not controlled here
+            //     recipeFormSection.classList.remove('hidden');
+            // } else {
+            //     console.error('recipeFormSection not found during prepareFormForAdd');
+            // }
         }
         
         // Authentifizierungsstatus überprüfen
@@ -235,7 +235,7 @@
                 authSection.classList.add('hidden');
                 userSection.classList.remove('hidden');
                 // recipeFormSection.classList.remove('hidden'); // Replaced by prepareFormForAdd
-                prepareFormForAdd(); // Show and reset form for adding new recipe
+                // prepareFormForAdd(); // Line removed - checkAuth no longer shows the form
                 
                 // Benutzerinitialen für Avatar
                 const initials = currentUser.email.substring(0, 1).toUpperCase();
@@ -255,81 +255,113 @@
         
         // Rezepte laden
         async function loadRecipes() {
-            const { data: recipes, error } = await supabase
-                .from('recipes')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                showNotification('Fehler beim Laden der Rezepte', 'error');
-                console.error(error);
-                return;
-            }
-            
-            if (recipes.length === 0) {
-                emptyState.classList.remove('hidden');
-                recipesContainer.innerHTML = '';
-                return;
-            }
-            
-            emptyState.classList.add('hidden');
-            recipesContainer.innerHTML = '';
-            
-            recipes.forEach(recipe => {
-                const recipeCard = document.createElement('div');
-                recipeCard.className = 'recipe-card';
-                
-                // Bild-Hintergrund setzen, falls vorhanden
-                const imgStyle = recipe.image_url 
-                    ? `background-image: url('${recipe.image_url}')`
-                    : 'background: linear-gradient(135deg, #ff6b6b, #4ecdc4)';
-                
-                // Zutaten formatieren
-                const ingredientsList = recipe.ingredients.split('\n')
-                    .map(ing => `<li>${ing}</li>`)
-                    .join('');
-                
-                recipeCard.innerHTML = `
-                    <div class="recipe-img" style="${imgStyle}"></div>
-                    <div class="recipe-content">
-                        <h3 class="recipe-title">${recipe.title}</h3>
-                        <div class="recipe-ingredients">
-                            <ul>${ingredientsList}</ul>
-                        </div>
-                    </div>
-                    <div class="recipe-actions">
-                        <button class="btn-icon btn-view" data-id="${recipe.id}">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn-icon btn-delete" data-id="${recipe.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                recipesContainer.appendChild(recipeCard);
-            });
-            
-            // Lösch-Buttons Event-Listener hinzufügen
-            document.querySelectorAll('.btn-delete').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const recipeId = e.currentTarget.getAttribute('data-id');
-                    deleteRecipe(recipeId);
-                });
-            });
+    recipesContainer.innerHTML = ''; // Clear recipes container first
 
-            console.log("Attempting to attach view button listeners...");
-            // View-Buttons Event-Listener hinzufügen
-            const viewButtons = document.querySelectorAll('.btn-view');
-            console.log("Found " + viewButtons.length + " view buttons to attach listeners to.");
-            viewButtons.forEach(button => {
-                button.addEventListener('click', (e) => {
-                    console.log("View button clicked. Recipe ID:", e.currentTarget.getAttribute('data-id'));
+    // 1. Create and add the "Add Recipe" card
+    const addRecipeCard = document.createElement('div');
+    addRecipeCard.className = 'recipe-card add-recipe-trigger-card'; // New specific class
+    addRecipeCard.id = 'addRecipeTriggerCard'; // For attaching its own event listener later
+    // Inline styles are temporary; will be moved to CSS. min-height is a placeholder.
+    addRecipeCard.innerHTML = `
+        <div class="add-recipe-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; cursor: pointer; min-height: 200px; padding: 20px;">
+            <i class="fas fa-plus" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+            <span style="font-size: 1.2rem; font-weight: 600; color: var(--dark);">Neues Rezept</span>
+        </div>
+    `;
+    recipesContainer.appendChild(addRecipeCard);
+
+    // ADD EVENT LISTENER FOR THE NEW CARD HERE:
+    const addRecipeTriggerElement = document.getElementById('addRecipeTriggerCard');
+    if (addRecipeTriggerElement) {
+        addRecipeTriggerElement.addEventListener('click', () => {
+            console.log("Add Recipe card clicked."); // For debugging
+            prepareFormForAdd(); // Reset form fields and state (title, button text)
+
+            // prepareFormForAdd no longer makes the form visible. So, do it here:
+            if (recipeFormSection) { // recipeFormSection is a global const
+                recipeFormSection.classList.remove('hidden');
+                recipeFormSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.error("recipeFormSection not found when trying to show it from addRecipeTriggerCard click.");
+            }
+        });
+    } else {
+        console.error("Failed to find #addRecipeTriggerCard to attach click listener.");
+    }
+
+    // 2. Fetch actual recipes from Supabase
+    const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        showNotification('Fehler beim Laden der Rezepte', 'error');
+        console.error('Supabase error fetching recipes:', error);
+        emptyState.classList.remove('hidden'); // Show empty state on error
+        // The "Add Recipe" card is still present.
+        return;
+    }
+
+    // 3. Handle display of actual recipes and the emptyState message
+    if (recipes.length === 0) {
+        // No actual recipes found, only the "Add Recipe" card is present.
+        emptyState.classList.remove('hidden');
+    } else {
+        emptyState.classList.add('hidden'); // Hide empty state if there are actual recipes
+
+        recipes.forEach(recipe => {
+            const recipeCardElement = document.createElement('div');
+            recipeCardElement.className = 'recipe-card';
+
+            const imgStyle = recipe.image_url
+                ? `background-image: url('${recipe.image_url}')`
+                : 'background: linear-gradient(135deg, var(--primary), var(--secondary))';
+
+            const ingredientsHtml = recipe.ingredients
+                ? recipe.ingredients.split('\n').filter(ing => ing.trim() !== '').map(ing => `<li>${ing}</li>`).join('')
+                : '<li>Keine Zutaten angegeben</li>';
+
+            recipeCardElement.innerHTML = `
+                <div class="recipe-img" style="${imgStyle}"></div>
+                <div class="recipe-content">
+                    <h3 class="recipe-title">${recipe.title || 'Unbenanntes Rezept'}</h3>
+                    <div class="recipe-ingredients">
+                        <ul>${ingredientsHtml}</ul>
+                    </div>
+                </div>
+                <div class="recipe-actions">
+                    <button class="btn-icon btn-view" data-id="${recipe.id}" aria-label="Rezept ansehen">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-icon btn-delete" data-id="${recipe.id}" aria-label="Rezept löschen">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            recipesContainer.appendChild(recipeCardElement);
+
+            // Attach event listeners directly to the buttons of this specific card
+            const viewBtn = recipeCardElement.querySelector('.btn-view');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', (e) => {
                     const recipeId = e.currentTarget.getAttribute('data-id');
                     displayFullRecipe(recipeId);
                 });
-            });
-        }
+            }
+
+            const deleteBtn = recipeCardElement.querySelector('.btn-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
+                    const recipeId = e.currentTarget.getAttribute('data-id');
+                    deleteRecipe(recipeId);
+                });
+            }
+        });
+    }
+    // Note: Old global querySelectorAll for .btn-view and .btn-delete are implicitly removed
+    // because the entire function is being replaced.
+}
 
         // Vollständiges Rezept anzeigen
         async function displayFullRecipe(recipeId) {
@@ -400,20 +432,30 @@
             document.getElementById('recipeTitle').value = recipe.title;
             document.getElementById('recipeIngredients').value = recipe.ingredients;
             document.getElementById('recipeInstructions').value = recipe.instructions;
-            recipeImageInput.value = null; // Clear file input
-            if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = ''; // Clear URL text input initially
 
-            // imagePreview is a global const
+            // Use global consts: recipeImageInput, recipeImageUrlTextInput, imagePreview
+            if (recipeImageInput) {
+                recipeImageInput.value = null; // Always clear file input when loading a recipe for edit
+            }
+
             if (recipe.image_url) {
-                imagePreview.src = recipe.image_url;
-                imagePreview.style.display = 'block';
-                imagePreview.dataset.existingImageUrl = recipe.image_url;
-                // If we want to allow editing of existing URLs directly in the text field:
-                // if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = recipe.image_url;
+                if (recipeImageUrlTextInput) {
+                    recipeImageUrlTextInput.value = recipe.image_url;
+                }
+                if (imagePreview) {
+                    imagePreview.src = recipe.image_url;
+                    imagePreview.style.display = 'block';
+                    imagePreview.dataset.existingImageUrl = recipe.image_url;
+                }
             } else {
-                imagePreview.src = '#';
-                imagePreview.style.display = 'none';
-                delete imagePreview.dataset.existingImageUrl;
+                if (recipeImageUrlTextInput) {
+                    recipeImageUrlTextInput.value = '';
+                }
+                if (imagePreview) {
+                    imagePreview.src = '#';
+                    imagePreview.style.display = 'none';
+                    delete imagePreview.dataset.existingImageUrl;
+                }
             }
 
             const formTitleEl = document.getElementById('recipeFormTitle');
@@ -570,7 +612,8 @@
                 } else {
                     showNotification('Rezept erfolgreich gespeichert!', 'success');
                     loadRecipes();
-                    prepareFormForAdd();
+                    prepareFormForAdd(); // Resets form content
+                    recipeFormSection.classList.add('hidden'); // Explicitly hide the form
                 }
             }
         }

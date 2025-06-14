@@ -187,6 +187,57 @@
             box-shadow: 0 15px 30px rgba(0,0,0,0.15);
         }
 
+/* Styling for the "Add Recipe" trigger card */
+.add-recipe-trigger-card {
+    /* Base styles like box-shadow and border-radius are inherited from .recipe-card */
+    border: 2px dashed var(--gray); /* Distinctive border */
+    background-color: var(--light); /* A light background, can be adjusted */
+
+    /* --- IMPORTANT ---
+       Adjust this min-height to match the typical height of your other recipe cards
+       for a visually consistent grid. You may need to inspect the computed height
+       of a populated recipe card to find a suitable value.
+       The height of .recipe-card is typically determined by its content:
+       .recipe-img (fixed height, e.g., 200px) + padding/margins + .recipe-content height + .recipe-actions height.
+       A value around 280px to 320px might be a good starting point.
+    */
+    min-height: 280px; /* Placeholder: USER SHOULD ADJUST THIS VALUE */
+
+    cursor: pointer; /* Make the entire card area clickable */
+
+    /* Ensure transitions match or extend .recipe-card's transitions */
+    transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.3s, box-shadow 0.3s;
+}
+
+.add-recipe-trigger-card:hover {
+    border-color: var(--primary); /* Highlight border on hover */
+    background-color: #f0f0f0; /* Slightly change background on hover */
+
+    /* Hover effects for transform and box-shadow will be inherited from .recipe-card:hover
+       unless explicitly overridden here. For example:
+    */
+    /* transform: translateY(-5px); */
+    /* box-shadow: 0 10px 20px rgba(0,0,0,0.10); */
+}
+
+/* Optional: If you want to move the inline styles for the plus icon and text
+   from index.html to style.css, you could use these rules.
+   For now, the inline styles in the HTML will take precedence for these specific elements.
+*/
+/*
+.add-recipe-trigger-card .add-recipe-content > .fa-plus {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 15px;
+}
+
+.add-recipe-trigger-card .add-recipe-content > span {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--dark);
+}
+*/
+
         .recipe-img {
             height: 200px;
             background-color: var(--gray);
