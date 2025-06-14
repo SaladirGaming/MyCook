@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mein Digitales Kochbuch</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        :root {
+            --primary: #ff6b6b;
+            --secondary: #4ecdc4;
+            --dark: #292f36;
+            --light: #f7fff7;
+            --accent: #ffe66d;
+            --gray: #e0e0e0;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 20px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+        }
+        
+        .auth-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background-color: var(--accent);
+            color: var(--dark);
+        }
+        
+        .btn-outline {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .hero {
+            text-align: center;
+            padding: 60px 20px;
+            background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url('https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3') no-repeat center center/cover;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--dark);
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 0 auto 30px;
+            color: #555;
+        }
+        
+        section {
+            padding: 50px 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--dark);
+            position: relative;
+        }
+        
+        .section-title:after {
+            content: '';
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--primary);
+            margin: 10px auto;
+            border-radius: 2px;
+        }
+        
+        .recipe-form {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid var(--gray);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border 0.3s;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
+        }
+        
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+        
+        .recipes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .recipe-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .recipe-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .recipe-img {
+            height: 200px;
+            background-color: var(--gray);
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .recipe-content {
+            padding: 20px;
+        }
+        
+        .recipe-title {
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+        
+        .recipe-ingredients {
+            color: #666;
+            margin-bottom: 15px;
+            max-height: 100px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .recipe-ingredients:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), white);
+        }
+        
+        .recipe-actions {
+            display: flex;
+            justify-content: flex-end;
+            padding: 15px;
+            background: #f9f9f9;
+            border-top: 1px solid var(--gray);
+        }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #777;
+            transition: color 0.3s;
+        }
+        
+        .btn-delete:hover {
+            color: var(--primary);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--dark);
+        }
+        
+        footer {
+            background: var(--dark);
+            color: white;
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.4s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: #4CAF50;
+        }
+        
+        .notification.error {
+            background-color: #f44336;
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .recipes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="notification" class="notification hidden"></div>
+    
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-utensils"></i>
+                    <span>Mein Kochbuch</span>
+                </div>
+                <div id="authSection">
+                    <div class="auth-buttons">
+                        <button id="signUpBtn" class="btn btn-outline">
+                            <i class="fas fa-user-plus"></i> Registrieren
+                        </button>
+                        <button id="signInBtn" class="btn btn-primary">
+                            <i class="fas fa-sign-in-alt"></i> Anmelden
+                        </button>
+                    </div>
+                </div>
+                <div id="userSection" class="hidden">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <button id="signOutBtn" class="btn btn-outline">
+                            <i class="fas fa-sign-out-alt"></i> Abmelden
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <section class="hero">
+            <h1>Dein persönliches digitales Kochbuch</h1>
+            <p>Speichere, organisiere und entdecke deine Lieblingsrezepte an einem Ort. Einfach, schnell und immer griffbereit!</p>
+        </section>
+        
+        <section id="recipeFormSection" class="hidden">
+            <h2 class="section-title">Neues Rezept hinzufügen</h2>
+            <div class="recipe-form">
+                <div class="form-group">
+                    <label for="recipeTitle">Rezeptname</label>
+                    <input type="text" id="recipeTitle" class="form-control" placeholder="Z.B. Spaghetti Carbonara">
+                </div>
+                <div class="form-group">
+                    <label for="recipeIngredients">Zutaten (eine pro Zeile)</label>
+                    <textarea id="recipeIngredients" class="form-control" placeholder="400g Spaghetti&#10;200g Speck&#10;3 Eier&#10;..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="recipeInstructions">Zubereitung</label>
+                    <textarea id="recipeInstructions" class="form-control" placeholder="1. Nudeln kochen...&#10;2. Speck anbraten..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="recipeImage">Bild-URL (optional)</label>
+                    <input type="text" id="recipeImage" class="form-control" placeholder="https://...">
+                </div>
+                <button id="saveRecipeBtn" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Rezept speichern
+                </button>
+            </div>
+        </section>
+        
+        <section id="recipesSection">
+            <h2 class="section-title">Meine Rezepte</h2>
+            <div id="emptyState" class="hero">
+                <h3>Noch keine Rezepte vorhanden</h3>
+                <p>Melde dich an und beginne mit dem Hinzufügen deiner Lieblingsrezepte!</p>
+            </div>
+            <div id="recipesContainer" class="recipes-grid"></div>
+        </section>
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Mein Digitales Kochbuch | Mit Liebe zum Kochen entwickelt</p>
+            <p>Verwaltet mit Supabase | Alle Rechte vorbehalten</p>
+        </div>
+    </footer>
+
+    <script>
+        // Supabase Initialisierung
+        const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+        
+        // DOM Elemente
+        const authSection = document.getElementById('authSection');
+        const userSection = document.getElementById('userSection');
+        const userAvatar = document.getElementById('userAvatar');
+        const signUpBtn = document.getElementById('signUpBtn');
+        const signInBtn = document.getElementById('signInBtn');
+        const signOutBtn = document.getElementById('signOutBtn');
+        const recipeFormSection = document.getElementById('recipeFormSection');
+        const recipesContainer = document.getElementById('recipesContainer');
+        const emptyState = document.getElementById('emptyState');
+        const saveRecipeBtn = document.getElementById('saveRecipeBtn');
+        const notification = document.getElementById('notification');
+        
+        // Authentifizierungsstatus überprüfen
+        async function checkAuth() {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            
+            if (user) {
+                // Benutzer angemeldet
+                authSection.classList.add('hidden');
+                userSection.classList.remove('hidden');
+                recipeFormSection.classList.remove('hidden');
+                
+                // Benutzerinitialen für Avatar
+                const initials = user.email.substring(0, 1).toUpperCase();
+                userAvatar.textContent = initials;
+                
+                // Rezepte laden
+                loadRecipes();
+            } else {
+                // Benutzer nicht angemeldet
+                authSection.classList.remove('hidden');
+                userSection.classList.add('hidden');
+                recipeFormSection.classList.add('hidden');
+                recipesContainer.innerHTML = '';
+                emptyState.classList.remove('hidden');
+            }
+        }
+        
+        // Rezepte laden
+        async function loadRecipes() {
+            const { data: recipes, error } = await supabase
+                .from('recipes')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (error) {
+                showNotification('Fehler beim Laden der Rezepte', 'error');
+                console.error(error);
+                return;
+            }
+            
+            if (recipes.length === 0) {
+                emptyState.classList.remove('hidden');
+                recipesContainer.innerHTML = '';
+                return;
+            }
+            
+            emptyState.classList.add('hidden');
+            recipesContainer.innerHTML = '';
+            
+            recipes.forEach(recipe => {
+                const recipeCard = document.createElement('div');
+                recipeCard.className = 'recipe-card';
+                
+                // Bild-Hintergrund setzen, falls vorhanden
+                const imgStyle = recipe.image_url 
+                    ? `background-image: url('${recipe.image_url}')`
+                    : 'background: linear-gradient(135deg, #ff6b6b, #4ecdc4)';
+                
+                // Zutaten formatieren
+                const ingredientsList = recipe.ingredients.split('\n')
+                    .map(ing => `<li>${ing}</li>`)
+                    .join('');
+                
+                recipeCard.innerHTML = `
+                    <div class="recipe-img" style="${imgStyle}"></div>
+                    <div class="recipe-content">
+                        <h3 class="recipe-title">${recipe.title}</h3>
+                        <div class="recipe-ingredients">
+                            <ul>${ingredientsList}</ul>
+                        </div>
+                    </div>
+                    <div class="recipe-actions">
+                        <button class="btn-icon btn-delete" data-id="${recipe.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                recipesContainer.appendChild(recipeCard);
+            });
+            
+            // Lösch-Buttons Event-Listener hinzufügen
+            document.querySelectorAll('.btn-delete').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const recipeId = e.currentTarget.getAttribute('data-id');
+                    deleteRecipe(recipeId);
+                });
+            });
+        }
+        
+        // Rezept löschen
+        async function deleteRecipe(recipeId) {
+            if (!confirm('Möchtest du dieses Rezept wirklich löschen?')) return;
+            
+            const { error } = await supabase
+                .from('recipes')
+                .delete()
+                .eq('id', recipeId);
+            
+            if (error) {
+                showNotification('Fehler beim Löschen des Rezepts', 'error');
+                console.error(error);
+            } else {
+                showNotification('Rezept erfolgreich gelöscht', 'success');
+                loadRecipes();
+            }
+        }
+        
+        // Neues Rezept speichern
+        async function saveRecipe() {
+            const title = document.getElementById('recipeTitle').value;
+            const ingredients = document.getElementById('recipeIngredients').value;
+            const instructions = document.getElementById('recipeInstructions').value;
+            const imageUrl = document.getElementById('recipeImage').value;
+            
+            if (!title || !ingredients || !instructions) {
+                showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
+                return;
+            }
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            const { error } = await supabase
+                .from('recipes')
+                .insert([{
+                    title,
+                    ingredients,
+                    instructions,
+                    image_url: imageUrl || null,
+                    user_id: user.id
+                }]);
+            
+            if (error) {
+                showNotification('Fehler beim Speichern des Rezepts', 'error');
+                console.error(error);
+            } else {
+                // Formular zurücksetzen
+                document.getElementById('recipeTitle').value = '';
+                document.getElementById('recipeIngredients').value = '';
+                document.getElementById('recipeInstructions').value = '';
+                document.getElementById('recipeImage').value = '';
+                
+                showNotification('Rezept erfolgreich gespeichert!', 'success');
+                loadRecipes();
+            }
+        }
+        
+        // Benachrichtigung anzeigen
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        // Event Listener
+        signUpBtn.addEventListener('click', async () => {
+            const email = prompt('Bitte gib deine E-Mail-Adresse ein:');
+            const password = prompt('Bitte wähle ein Passwort:');
+            
+            if (email && password) {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password
+                });
+                
+                if (error) {
+                    showNotification(`Registrierung fehlgeschlagen: ${error.message}`, 'error');
+                } else {
+                    showNotification('Registrierung erfolgreich! Bitte überprüfe deine E-Mails.', 'success');
+                }
+            }
+        });
+        
+        signInBtn.addEventListener('click', async () => {
+            const email = prompt('Bitte gib deine E-Mail-Adresse ein:');
+            const password = prompt('Bitte gib dein Passwort ein:');
+            
+            if (email && password) {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+                
+                if (error) {
+                    showNotification(`Anmeldung fehlgeschlagen: ${error.message}`, 'error');
+                } else {
+                    showNotification('Erfolgreich angemeldet!', 'success');
+                    checkAuth();
+                }
+            }
+        });
+        
+        signOutBtn.addEventListener('click', async () => {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                showNotification('Abmeldung fehlgeschlagen', 'error');
+            } else {
+                showNotification('Erfolgreich abgemeldet', 'success');
+                checkAuth();
+            }
+        });
+        
+        saveRecipeBtn.addEventListener('click', saveRecipe);
+        
+        // Initiale Überprüfung des Authentifizierungsstatus
+        checkAuth();
+    </script>
+</body>
+</html>
