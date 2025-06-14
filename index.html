@@ -671,21 +671,30 @@
 
         // Vollständiges Rezept anzeigen
         async function displayFullRecipe(recipeId) {
+            console.log(`displayFullRecipe: Called with recipeId: ${recipeId}`);
             const { data: recipe, error } = await supabase
                 .from('recipes')
                 .select('*')
                 .eq('id', recipeId)
                 .single();
 
+            console.log("displayFullRecipe: Fetched recipe data:", recipe);
+            console.log("displayFullRecipe: Supabase error object:", error);
+
             if (error) {
                 showNotification('Fehler beim Laden des Rezepts für die Detailansicht.', 'error');
                 console.error('Error fetching recipe details:', error);
+                console.log("displayFullRecipe: Exiting due to Supabase error.");
                 return;
             }
 
+            console.log(`displayFullRecipe: Checking if recipe object is valid (truthy). Recipe:`, recipe);
             if (recipe) {
+                console.log("displayFullRecipe: Recipe object is valid. Attempting to populate modal.");
+                console.log(`displayFullRecipe: Setting title to: ${recipe.title}`);
                 modalRecipeTitle.textContent = recipe.title;
 
+                console.log(`displayFullRecipe: Setting image URL to: ${recipe.image_url}`);
                 if (recipe.image_url) {
                     modalRecipeImage.src = recipe.image_url;
                     modalRecipeImage.style.display = 'block';
@@ -694,6 +703,7 @@
                     modalRecipeImage.style.display = 'none';
                 }
 
+                console.log(`displayFullRecipe: Setting ingredients. Raw:`, recipe.ingredients);
                 // Zutaten formatieren (Newline-separated to UL)
                 if (recipe.ingredients) {
                     const ingredientsArray = recipe.ingredients.split('\n').filter(ing => ing.trim() !== '');
@@ -702,6 +712,7 @@
                     modalRecipeIngredients.innerHTML = 'Keine Zutaten angegeben.';
                 }
 
+                console.log(`displayFullRecipe: Setting instructions. Raw:`, recipe.instructions);
                 // Zubereitung formatieren (Newline to <br>)
                 if (recipe.instructions) {
                     modalRecipeInstructions.innerHTML = recipe.instructions.replace(/\n/g, '<br>');
@@ -711,7 +722,14 @@
 
                 recipeDetailModal.dataset.currentRecipeId = recipe.id;
                 modalEditRecipeBtn.dataset.recipeId = recipe.id; // Store ID for edit button
+
+                console.log("displayFullRecipe: Attempting to show modal by removing 'hidden' class from recipeDetailModal.");
                 recipeDetailModal.classList.remove('hidden');
+                console.log("displayFullRecipe: Modal 'hidden' class removed. Current classes:", recipeDetailModal.classList.toString());
+                console.log("displayFullRecipe: Modal style.display:", window.getComputedStyle(recipeDetailModal).display);
+            } else {
+                console.log("displayFullRecipe: Recipe object was null or undefined, and no Supabase error was reported. Modal will not be shown.");
+                showNotification('Rezept nicht gefunden oder Daten unvollständig.', 'error');
             }
         }
 
