@@ -458,8 +458,9 @@
                     <textarea id="recipeInstructions" class="form-control" placeholder="1. Nudeln kochen...&#10;2. Speck anbraten..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="recipeImage">Bild-URL (optional)</label>
-                    <input type="text" id="recipeImage" class="form-control" placeholder="https://...">
+                    <label for="recipeImage">Rezeptbild auswählen (optional)</label>
+                    <input type="file" id="recipeImage" class="form-control" accept="image/*">
+                    <img id="imagePreview" src="#" alt="Vorschau" style="display: none; max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 8px; object-fit: cover;">
                 </div>
                 <button id="saveRecipeBtn" class="btn btn-primary">
                     <i class="fas fa-save"></i> Rezept speichern
@@ -546,6 +547,8 @@
         const modalRecipeIngredients = document.getElementById('modalRecipeIngredients');
         const modalRecipeInstructions = document.getElementById('modalRecipeInstructions');
         const modalEditRecipeBtn = document.getElementById('modalEditRecipeBtn');
+        const recipeImageInput = document.getElementById('recipeImage');
+        const imagePreview = document.getElementById('imagePreview');
         // recipeFormTitle is defined after DOM parsing, but needed in functions.
         // Let's ensure it's either passed or defined globally if checkAuth can call prepareFormForAdd before full DOM ready.
         // However, this script is at the end of body, so DOM should be ready.
@@ -556,7 +559,14 @@
             document.getElementById('recipeTitle').value = '';
             document.getElementById('recipeIngredients').value = '';
             document.getElementById('recipeInstructions').value = '';
-            document.getElementById('recipeImage').value = '';
+            document.getElementById('recipeImage').value = null; // Clear the file input
+
+            // imagePreview is a global const
+            if (imagePreview) {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+                delete imagePreview.dataset.existingImageUrl;
+            }
 
             const formTitleEl = document.getElementById('recipeFormTitle');
             if (formTitleEl) {
@@ -772,7 +782,18 @@
             document.getElementById('recipeTitle').value = recipe.title;
             document.getElementById('recipeIngredients').value = recipe.ingredients;
             document.getElementById('recipeInstructions').value = recipe.instructions;
-            document.getElementById('recipeImage').value = recipe.image_url || '';
+            document.getElementById('recipeImage').value = null; // Clear file input
+
+            // imagePreview is a global const
+            if (recipe.image_url) {
+                imagePreview.src = recipe.image_url;
+                imagePreview.style.display = 'block';
+                imagePreview.dataset.existingImageUrl = recipe.image_url;
+            } else {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+                delete imagePreview.dataset.existingImageUrl;
+            }
 
             const formTitleEl = document.getElementById('recipeFormTitle');
             if (formTitleEl) {
@@ -817,31 +838,82 @@
         // Neues Rezept speichern / Rezept aktualisieren
         async function saveRecipe() {
             console.log("saveRecipe function called.");
-            console.log("Current editingId:", saveRecipeBtn.dataset.editingId);
+            console.log("Current editingId:", saveRecipeBtn.dataset.editingId); // saveRecipeBtn is global
 
             const title = document.getElementById('recipeTitle').value;
             const ingredients = document.getElementById('recipeIngredients').value;
             const instructions = document.getElementById('recipeInstructions').value;
-            const imageUrl = document.getElementById('recipeImage').value;
 
             const editingId = saveRecipeBtn.dataset.editingId;
+            const fileInput = document.getElementById('recipeImage'); // Or use the global const recipeImageInput
+            const selectedFile = fileInput.files[0];
+            let userForOps = null;
 
             if (!title || !ingredients || !instructions) {
                 showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
                 return;
             }
 
+            // Determine if user object is needed (for new recipe or if a file is being uploaded)
+            if (selectedFile || !editingId) {
+                const { data: authData, error: authUserError } = await supabase.auth.getUser();
+                if (authUserError || !authData.user) {
+                    showNotification('Benutzer nicht authentifiziert. Speichern nicht möglich.', 'error');
+                    console.error('saveRecipe: User not authenticated for operation.', authUserError);
+                    return;
+                }
+                userForOps = authData.user;
+            }
+
+            let finalImageUrl = null;
+
+            if (selectedFile) {
+                console.log("saveRecipe: New file selected for upload:", selectedFile.name);
+                // userForOps is guaranteed to be populated here if selectedFile is true
+                const userId = userForOps.id;
+                const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
+                const filePath = `${userId}/${Date.now()}-${sanitizedFileName}`;
+
+                console.log(`saveRecipe: Uploading to Supabase Storage at path: ${filePath}`);
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('recipe-images')
+                    .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+
+                if (uploadError) {
+                    showNotification('Fehler beim Hochladen des Bildes.', 'error');
+                    console.error('saveRecipe: Supabase Storage upload error:', uploadError);
+                    return;
+                }
+
+                console.log("saveRecipe: File uploaded successfully. Upload data path:", uploadData.path);
+                const { data: publicUrlResponseData, error: getUrlError } = supabase.storage
+                    .from('recipe-images')
+                    .getPublicUrl(uploadData.path);
+
+                if (getUrlError || !publicUrlResponseData || !publicUrlResponseData.publicUrl) {
+                    showNotification('Fehler beim Abrufen der Bild-URL.', 'error');
+                    console.error('saveRecipe: Could not get public URL. Error:', getUrlError, 'Response:', publicUrlResponseData);
+                    finalImageUrl = null;
+                } else {
+                    finalImageUrl = publicUrlResponseData.publicUrl;
+                    console.log("saveRecipe: Public URL for new image:", finalImageUrl);
+                }
+            } else if (editingId) {
+                // imagePreview is a global const
+                if (imagePreview && imagePreview.dataset.existingImageUrl) {
+                     finalImageUrl = imagePreview.dataset.existingImageUrl;
+                     console.log("saveRecipe: No new file, using existing image URL for edit:", finalImageUrl);
+                } else {
+                    console.log("saveRecipe: No new file and no existing image URL found for edit (or image was intentionally removed).");
+                    finalImageUrl = null;
+                }
+            }
+
             if (editingId) {
-                // Update logic
-                console.log("saveRecipe (update path): Attempting to update recipe. ID:", editingId, "Payload:", { title, ingredients, instructions, image_url: imageUrl || null });
+                console.log("saveRecipe (update path): Attempting to update recipe. ID:", editingId, "Payload:", { title, ingredients, instructions, image_url: finalImageUrl });
                 const { error } = await supabase
                     .from('recipes')
-                    .update({
-                        title,
-                        ingredients,
-                        instructions,
-                        image_url: imageUrl || null
-                    })
+                    .update({ title, ingredients, instructions, image_url: finalImageUrl })
                     .eq('id', editingId);
 
                 console.log("saveRecipe (update path): Supabase update response - error object:", error);
@@ -849,35 +921,19 @@
                 if (error) {
                     showNotification('Fehler beim Aktualisieren des Rezepts', 'error');
                     console.error('Error updating recipe:', error);
-                    console.log("saveRecipe (update error path): Update failed. Resetting and hiding form.");
-                    prepareFormForAdd(); // Reset form to "add new" state and makes it visible
-                    // recipeFormSection.classList.add('hidden'); // Line removed
+                    console.log("saveRecipe (update error path): Update failed.");
                 } else {
-                    // Successful update
                     showNotification('Rezept erfolgreich aktualisiert!', 'success');
-                    console.log("saveRecipe (update success path): Update successful. Resetting and hiding form.");
+                    console.log("saveRecipe (update success path): Update successful.");
                     loadRecipes();
-                    prepareFormForAdd(); // Reset form to "add new" state and makes it visible
-                    // recipeFormSection.classList.add('hidden'); // Line removed
                 }
+                prepareFormForAdd(); // Reset form and keep it visible
             } else {
-                // Insert logic
-                const { data: { user }, error: userError } = await supabase.auth.getUser();
-                if (userError || !user) {
-                    showNotification('Benutzer nicht angemeldet. Kann Rezept nicht speichern.', 'error');
-                    console.error('User not found for saving recipe:', userError);
-                    return;
-                }
-
+                // This is the insert path; userForOps must be defined
+                console.log("saveRecipe (insert path): Attempting to insert new recipe. Payload:", { title, ingredients, instructions, image_url: finalImageUrl, user_id: userForOps.id });
                 const { error } = await supabase
                     .from('recipes')
-                    .insert([{
-                        title,
-                        ingredients,
-                        instructions,
-                        image_url: imageUrl || null,
-                        user_id: user.id
-                    }]);
+                    .insert([{ title, ingredients, instructions, image_url: finalImageUrl, user_id: userForOps.id }]);
 
                 if (error) {
                     showNotification('Fehler beim Speichern des Rezepts', 'error');
@@ -885,7 +941,7 @@
                 } else {
                     showNotification('Rezept erfolgreich gespeichert!', 'success');
                     loadRecipes();
-                    prepareFormForAdd(); // Resets form and keeps it visible for another entry
+                    prepareFormForAdd();
                 }
             }
         }
@@ -989,6 +1045,28 @@
             });
         } else {
             console.error('modalEditRecipeBtn not found in the DOM.');
+        }
+
+        // Event Listener for Image Preview
+        if (recipeImageInput && imagePreview) {
+            recipeImageInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block'; // Show the preview
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    // No file selected or selection cleared
+                    imagePreview.src = '#'; // Reset src
+                    imagePreview.style.display = 'none'; // Hide the preview
+                }
+            });
+        } else {
+            if (!recipeImageInput) console.error("recipeImage input not found");
+            if (!imagePreview) console.error("imagePreview img tag not found");
         }
         
         // Initiale Überprüfung des Authentifizierungsstatus
