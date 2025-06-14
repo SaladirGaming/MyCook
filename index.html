@@ -850,15 +850,15 @@
                     showNotification('Fehler beim Aktualisieren des Rezepts', 'error');
                     console.error('Error updating recipe:', error);
                     console.log("saveRecipe (update error path): Update failed. Resetting and hiding form.");
-                    prepareFormForAdd(); // Reset form to "add new" state
-                    recipeFormSection.classList.add('hidden'); // Hide form
+                    prepareFormForAdd(); // Reset form to "add new" state and makes it visible
+                    // recipeFormSection.classList.add('hidden'); // Line removed
                 } else {
                     // Successful update
                     showNotification('Rezept erfolgreich aktualisiert!', 'success');
                     console.log("saveRecipe (update success path): Update successful. Resetting and hiding form.");
                     loadRecipes();
-                    prepareFormForAdd(); // Reset form to "add new" state
-                    recipeFormSection.classList.add('hidden'); // Hide form
+                    prepareFormForAdd(); // Reset form to "add new" state and makes it visible
+                    // recipeFormSection.classList.add('hidden'); // Line removed
                 }
             } else {
                 // Insert logic
