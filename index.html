@@ -458,8 +458,10 @@
                     <textarea id="recipeInstructions" class="form-control" placeholder="1. Nudeln kochen...&#10;2. Speck anbraten..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="recipeImage">Rezeptbild auswählen (optional)</label>
-                    <input type="file" id="recipeImage" class="form-control" accept="image/*">
+                    <label for="recipeImage">Rezeptbild (optional)</label>
+                    <small class="form-text text-muted" style="display: block; margin-bottom: 5px;">Datei hochladen oder URL eingeben. Upload hat Vorrang.</small>
+                    <input type="file" id="recipeImage" class="form-control" accept="image/*" style="margin-bottom: 10px;">
+                    <input type="text" id="recipeImageUrlText" class="form-control" placeholder="Oder Bild-URL hier einfügen">
                     <img id="imagePreview" src="#" alt="Vorschau" style="display: none; max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 8px; object-fit: cover;">
                 </div>
                 <button id="saveRecipeBtn" class="btn btn-primary">
@@ -549,6 +551,7 @@
         const modalEditRecipeBtn = document.getElementById('modalEditRecipeBtn');
         const recipeImageInput = document.getElementById('recipeImage');
         const imagePreview = document.getElementById('imagePreview');
+        const recipeImageUrlTextInput = document.getElementById('recipeImageUrlText');
         // recipeFormTitle is defined after DOM parsing, but needed in functions.
         // Let's ensure it's either passed or defined globally if checkAuth can call prepareFormForAdd before full DOM ready.
         // However, this script is at the end of body, so DOM should be ready.
@@ -559,7 +562,8 @@
             document.getElementById('recipeTitle').value = '';
             document.getElementById('recipeIngredients').value = '';
             document.getElementById('recipeInstructions').value = '';
-            document.getElementById('recipeImage').value = null; // Clear the file input
+            recipeImageInput.value = null; // Clear the file input
+            if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = ''; // Clear URL text input
 
             // imagePreview is a global const
             if (imagePreview) {
@@ -782,13 +786,16 @@
             document.getElementById('recipeTitle').value = recipe.title;
             document.getElementById('recipeIngredients').value = recipe.ingredients;
             document.getElementById('recipeInstructions').value = recipe.instructions;
-            document.getElementById('recipeImage').value = null; // Clear file input
+            recipeImageInput.value = null; // Clear file input
+            if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = ''; // Clear URL text input initially
 
             // imagePreview is a global const
             if (recipe.image_url) {
                 imagePreview.src = recipe.image_url;
                 imagePreview.style.display = 'block';
                 imagePreview.dataset.existingImageUrl = recipe.image_url;
+                // If we want to allow editing of existing URLs directly in the text field:
+                // if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = recipe.image_url;
             } else {
                 imagePreview.src = '#';
                 imagePreview.style.display = 'none';
@@ -848,13 +855,15 @@
             const fileInput = document.getElementById('recipeImage'); // Or use the global const recipeImageInput
             const selectedFile = fileInput.files[0];
             let userForOps = null;
+            const recipeImageUrlFromText = recipeImageUrlTextInput.value.trim(); // recipeImageUrlTextInput is global
 
             if (!title || !ingredients || !instructions) {
                 showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
                 return;
             }
 
-            // Determine if user object is needed (for new recipe or if a file is being uploaded)
+            // Fetch user if a new file is being uploaded OR if it's a new recipe (not editingId)
+            // This user object (userForOps) will be used for constructing file path and for user_id in new recipes.
             if (selectedFile || !editingId) {
                 const { data: authData, error: authUserError } = await supabase.auth.getUser();
                 if (authUserError || !authData.user) {
@@ -864,12 +873,14 @@
                 }
                 userForOps = authData.user;
             }
+            // Now userForOps is populated if needed for later ops.
+            // If only editing text fields of an existing recipe without changing image via file/URL text, userForOps might remain null, which is fine for that specific case.
 
             let finalImageUrl = null;
 
-            if (selectedFile) {
-                console.log("saveRecipe: New file selected for upload:", selectedFile.name);
-                // userForOps is guaranteed to be populated here if selectedFile is true
+            if (selectedFile) { // Priority 1: Uploaded file
+                console.log("saveRecipe: New file selected. Uploading...");
+                // userForOps is guaranteed to be populated here due to the check above
                 const userId = userForOps.id;
                 const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
                 const filePath = `${userId}/${Date.now()}-${sanitizedFileName}`;
@@ -885,29 +896,33 @@
                     return;
                 }
 
-                console.log("saveRecipe: File uploaded successfully. Upload data path:", uploadData.path);
+                console.log("saveRecipe: File uploaded successfully. Path:", uploadData.path);
                 const { data: publicUrlResponseData, error: getUrlError } = supabase.storage
                     .from('recipe-images')
                     .getPublicUrl(uploadData.path);
 
                 if (getUrlError || !publicUrlResponseData || !publicUrlResponseData.publicUrl) {
-                    showNotification('Fehler beim Abrufen der Bild-URL.', 'error');
+                    showNotification('Fehler beim Abrufen der Bild-URL nach Upload.', 'error');
                     console.error('saveRecipe: Could not get public URL. Error:', getUrlError, 'Response:', publicUrlResponseData);
-                    finalImageUrl = null;
+                    // finalImageUrl remains null if URL retrieval fails after successful upload
                 } else {
                     finalImageUrl = publicUrlResponseData.publicUrl;
-                    console.log("saveRecipe: Public URL for new image:", finalImageUrl);
+                    console.log("saveRecipe: Uploaded image public URL:", finalImageUrl);
                 }
-            } else if (editingId) {
+            } else if (recipeImageUrlFromText) { // Priority 2: URL from text input
+                console.log("saveRecipe: Using URL from text input:", recipeImageUrlFromText);
+                finalImageUrl = recipeImageUrlFromText;
+            } else if (editingId) { // Priority 3: Existing image (if editing and no new file/URL)
                 // imagePreview is a global const
                 if (imagePreview && imagePreview.dataset.existingImageUrl) {
                      finalImageUrl = imagePreview.dataset.existingImageUrl;
-                     console.log("saveRecipe: No new file, using existing image URL for edit:", finalImageUrl);
+                     console.log("saveRecipe: No new input, using existing image URL for edit:", finalImageUrl);
                 } else {
-                    console.log("saveRecipe: No new file and no existing image URL found for edit (or image was intentionally removed).");
-                    finalImageUrl = null;
+                    console.log("saveRecipe: No new input, no existing image URL found for edit (or it was cleared).");
+                    finalImageUrl = null; // Image was removed or never existed
                 }
             }
+            // If it's a new recipe and no file/URL, finalImageUrl remains null.
 
             if (editingId) {
                 console.log("saveRecipe (update path): Attempting to update recipe. ID:", editingId, "Payload:", { title, ingredients, instructions, image_url: finalImageUrl });
@@ -1047,7 +1062,7 @@
             console.error('modalEditRecipeBtn not found in the DOM.');
         }
 
-        // Event Listener for Image Preview
+        // Event Listener for Image Preview (File Input)
         if (recipeImageInput && imagePreview) {
             recipeImageInput.addEventListener('change', function(event) {
                 const file = event.target.files[0];
@@ -1056,17 +1071,46 @@
                     reader.onload = function(e) {
                         imagePreview.src = e.target.result;
                         imagePreview.style.display = 'block'; // Show the preview
+                        delete imagePreview.dataset.existingImageUrl; // New file overrides existing URL
                     }
                     reader.readAsDataURL(file);
+                    if (recipeImageUrlTextInput) {
+                        recipeImageUrlTextInput.value = ''; // Clear URL input if file is chosen
+                    }
                 } else {
-                    // No file selected or selection cleared
-                    imagePreview.src = '#'; // Reset src
-                    imagePreview.style.display = 'none'; // Hide the preview
+                    // No file selected or selection cleared - hide preview ONLY if URL field is also empty
+                    if (!recipeImageUrlTextInput || !recipeImageUrlTextInput.value.trim()) {
+                        imagePreview.src = '#'; // Reset src
+                        imagePreview.style.display = 'none'; // Hide the preview
+                        delete imagePreview.dataset.existingImageUrl;
+                    }
                 }
             });
         } else {
-            if (!recipeImageInput) console.error("recipeImage input not found");
+            if (!recipeImageInput) console.error("recipeImage input (file) not found");
             if (!imagePreview) console.error("imagePreview img tag not found");
+        }
+
+        // Event Listener for Image URL Text Input
+        if (recipeImageUrlTextInput && imagePreview && recipeImageInput) {
+            recipeImageUrlTextInput.addEventListener('input', function(event) {
+                const imageUrl = event.target.value.trim();
+                if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+                    imagePreview.src = imageUrl;
+                    imagePreview.style.display = 'block';
+                    recipeImageInput.value = null; // Clear the file input if a URL is typed
+                    imagePreview.dataset.existingImageUrl = imageUrl; // This URL is now the one to consider
+                } else if (!imageUrl) { // URL input is empty
+                    delete imagePreview.dataset.existingImageUrl;
+                    if (recipeImageInput.files.length === 0) { // And no file is selected
+                        imagePreview.src = '#';
+                        imagePreview.style.display = 'none';
+                    }
+                    // If a file IS selected, its preview remains.
+                }
+            });
+        } else {
+            if (!recipeImageUrlTextInput) console.error("recipeImageUrlTextInput input not found");
         }
         
         // Initiale Überprüfung des Authentifizierungsstatus
