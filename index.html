@@ -656,9 +656,13 @@
                 });
             });
 
+            console.log("Attempting to attach view button listeners...");
             // View-Buttons Event-Listener hinzufügen
-            document.querySelectorAll('.btn-view').forEach(button => {
+            const viewButtons = document.querySelectorAll('.btn-view');
+            console.log("Found " + viewButtons.length + " view buttons to attach listeners to.");
+            viewButtons.forEach(button => {
                 button.addEventListener('click', (e) => {
+                    console.log("View button clicked. Recipe ID:", e.currentTarget.getAttribute('data-id'));
                     const recipeId = e.currentTarget.getAttribute('data-id');
                     displayFullRecipe(recipeId);
                 });
