@@ -256,6 +256,7 @@
         // Rezepte laden
         async function loadRecipes() {
     recipesContainer.innerHTML = ''; // Clear recipes container first
+    console.log("loadRecipes: recipesContainer cleared.");
 
     // 1. Create and add the "Add Recipe" card
     const addRecipeCard = document.createElement('div');
@@ -294,6 +295,9 @@
         .from('recipes')
         .select('*')
         .order('created_at', { ascending: false });
+
+    console.log("loadRecipes: Recipes fetched from Supabase:", JSON.stringify(recipes, null, 2));
+    console.log("loadRecipes: Number of recipes fetched:", recipes ? recipes.length : 0);
 
     if (error) {
         showNotification('Fehler beim Laden der Rezepte', 'error');
@@ -339,6 +343,7 @@
                     </button>
                 </div>
             `;
+            console.log("loadRecipes: Appending recipe card for:", recipe.title, "(ID:", recipe.id + ")");
             recipesContainer.appendChild(recipeCardElement);
 
             // Attach event listeners directly to the buttons of this specific card
