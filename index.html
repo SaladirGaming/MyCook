@@ -816,6 +816,9 @@
         
         // Neues Rezept speichern / Rezept aktualisieren
         async function saveRecipe() {
+            console.log("saveRecipe function called.");
+            console.log("Current editingId:", saveRecipeBtn.dataset.editingId);
+
             const title = document.getElementById('recipeTitle').value;
             const ingredients = document.getElementById('recipeIngredients').value;
             const instructions = document.getElementById('recipeInstructions').value;
@@ -830,6 +833,7 @@
 
             if (editingId) {
                 // Update logic
+                console.log("saveRecipe (update path): Attempting to update recipe. ID:", editingId, "Payload:", { title, ingredients, instructions, image_url: imageUrl || null });
                 const { error } = await supabase
                     .from('recipes')
                     .update({
@@ -840,14 +844,21 @@
                     })
                     .eq('id', editingId);
 
+                console.log("saveRecipe (update path): Supabase update response - error object:", error);
+
                 if (error) {
                     showNotification('Fehler beim Aktualisieren des Rezepts', 'error');
                     console.error('Error updating recipe:', error);
+                    console.log("saveRecipe (update error path): Update failed. Resetting and hiding form.");
+                    prepareFormForAdd(); // Reset form to "add new" state
+                    recipeFormSection.classList.add('hidden'); // Hide form
                 } else {
+                    // Successful update
                     showNotification('Rezept erfolgreich aktualisiert!', 'success');
+                    console.log("saveRecipe (update success path): Update successful. Resetting and hiding form.");
                     loadRecipes();
-                    prepareFormForAdd(); // Resets form to "add new" state and makes it visible
-                    recipeFormSection.classList.add('hidden'); // Then hide it after update
+                    prepareFormForAdd(); // Reset form to "add new" state
+                    recipeFormSection.classList.add('hidden'); // Hide form
                 }
             } else {
                 // Insert logic
