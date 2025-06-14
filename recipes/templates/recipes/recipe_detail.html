@@ -1,0 +1,9 @@
+<h1>{{ recipe.title }}</h1>
+<p><strong>Ingredients:</strong></p>
+<p>{{ recipe.ingredients|linebreaksbr }}</p>
+<p><strong>Instructions:</strong></p>
+<p>{{ recipe.instructions|linebreaksbr }}</p>
+<br>
+<a href="{% url 'recipe_list' %}">Back to list</a>
+<br><a href="{% url 'edit_recipe' recipe_id=recipe.id %}">Edit this Recipe</a>
+{# We will add an edit link here later #}

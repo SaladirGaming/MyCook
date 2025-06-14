@@ -1,0 +1,12 @@
+<h1>{% if recipe %}Edit {{ recipe.title }}{% else %}Add New Recipe{% endif %}</h1>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save Changes</button>
+</form>
+<br>
+{% if recipe %}
+<a href="{% url 'recipe_detail' recipe_id=recipe.id %}">Cancel and View Recipe</a>
+<br>
+{% endif %}
+<a href="{% url 'recipe_list' %}">Back to Recipe List</a>

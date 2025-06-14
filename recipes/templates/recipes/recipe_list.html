@@ -1,0 +1,14 @@
+<h1>Recipes</h1>
+<a href="{% url 'create_recipe' %}">Add New Recipe</a>
+{% if recipes %}
+<ul>
+    {% for recipe in recipes %}
+        <li>
+            <a href="{% url 'recipe_detail' recipe_id=recipe.id %}">{{ recipe.title }}</a>
+            - <a href="{% url 'edit_recipe' recipe_id=recipe.id %}" style="font-size: 0.8em;">Edit</a>
+        </li>
+    {% endfor %}
+</ul>
+{% else %}
+<p>No recipes yet. Please add some!</p>
+{% endif %}
