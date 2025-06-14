@@ -338,7 +338,7 @@
         .modal-content {
             background-color: #fefefe;
             margin: 10% auto; /* 10% from the top and centered */
-            padding: 20px;
+            padding: 20px 30px; /* Adjusted padding: 20px top/bottom, 30px left/right */
             border: 1px solid #888;
             width: 80%; /* Could be more or less, depending on screen size */
             border-radius: 10px;
@@ -358,6 +358,40 @@
             color: black;
             text-decoration: none;
             cursor: pointer;
+        }
+
+        #modalRecipeTitle {
+            font-size: 2rem; /* Larger font size for the title */
+            font-weight: bold; /* Ensure it's bold */
+            text-align: center; /* Center the title */
+            margin-bottom: 20px; /* Space below the title */
+            color: var(--dark); /* Use a primary dark color, consistent with other titles */
+        }
+
+        #modalRecipeIngredients ul {
+            list-style-type: disc; /* Ensure default disc bullets are used */
+            padding-left: 25px; /* Standard indentation for the list */
+            margin-top: 5px; /* Small space above the list */
+        }
+
+        #modalRecipeIngredients li {
+            margin-bottom: 10px; /* Space between each ingredient */
+            line-height: 1.6; /* Improved line height for readability */
+            font-size: 0.95rem; /* Slightly adjust font size if needed, or keep at 1rem */
+        }
+
+        #modalRecipeInstructions {
+            line-height: 1.7; /* Generous line height for easy reading of instruction steps */
+            margin-bottom: 25px; /* Ensure enough space before the 'Edit' button */
+            font-size: 0.95rem; /* Match ingredient font size or keep at 1rem */
+        }
+
+        .modal-content h3 {
+            font-size: 1.3rem; /* Slightly larger than body text, smaller than main title */
+            color: var(--primary); /* Use a theme color for emphasis */
+            margin-top: 25px; /* Space above the subheading */
+            margin-bottom: 10px; /* Space below the subheading, before the content */
+            font-weight: 600; /* Medium boldness */
         }
     </style>
 </head>
