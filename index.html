@@ -6,323 +6,7 @@
     <title>Mein Digitales Kochbuch</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-    <style>
-        :root {
-            --primary: #ff6b6b;
-            --secondary: #4ecdc4;
-            --dark: #292f36;
-            --light: #f7fff7;
-            --accent: #ffe66d;
-            --gray: #e0e0e0;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background-color: #f9f9f9;
-            color: var(--dark);
-            line-height: 1.6;
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 20px 0;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .header-content {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.8rem;
-            font-weight: bold;
-        }
-        
-        .logo i {
-            font-size: 2rem;
-        }
-        
-        .auth-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .btn-primary {
-            background-color: var(--accent);
-            color: var(--dark);
-        }
-        
-        .btn-outline {
-            background: transparent;
-            border: 2px solid white;
-            color: white;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        .hero {
-            text-align: center;
-            padding: 60px 20px;
-            background: linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)), url('https://images.unsplash.com/photo-1490818387583-1baba5e638af?ixlib=rb-4.0.3') no-repeat center center/cover;
-        }
-        
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 20px;
-            color: var(--dark);
-        }
-        
-        .hero p {
-            font-size: 1.2rem;
-            max-width: 700px;
-            margin: 0 auto 30px;
-            color: #555;
-        }
-        
-        section {
-            padding: 50px 0;
-        }
-        
-        .section-title {
-            text-align: center;
-            margin-bottom: 40px;
-            color: var(--dark);
-            position: relative;
-        }
-        
-        .section-title:after {
-            content: '';
-            display: block;
-            width: 80px;
-            height: 4px;
-            background: var(--primary);
-            margin: 10px auto;
-            border-radius: 2px;
-        }
-        
-        .recipe-form {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: var(--dark);
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid var(--gray);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: var(--secondary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(78, 205, 196, 0.2);
-        }
-        
-        textarea.form-control {
-            min-height: 120px;
-            resize: vertical;
-        }
-        
-        .recipes-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 30px;
-            margin-top: 30px;
-        }
-        
-        .recipe-card {
-            background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        
-        .recipe-card:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-        }
-        
-        .recipe-img {
-            height: 200px;
-            background-color: var(--gray);
-            background-size: cover;
-            background-position: center;
-        }
-        
-        .recipe-content {
-            padding: 20px;
-        }
-        
-        .recipe-title {
-            font-size: 1.4rem;
-            margin-bottom: 10px;
-            color: var(--dark);
-        }
-        
-        .recipe-ingredients {
-            color: #666;
-            margin-bottom: 15px;
-            max-height: 100px;
-            overflow: hidden;
-            position: relative;
-        }
-        
-        .recipe-ingredients:after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 30px;
-            background: linear-gradient(to bottom, rgba(255,255,255,0), white);
-        }
-        
-        .recipe-actions {
-            display: flex;
-            justify-content: flex-end;
-            padding: 15px;
-            background: #f9f9f9;
-            border-top: 1px solid var(--gray);
-        }
-        
-        .btn-icon {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #777;
-            transition: color 0.3s;
-        }
-        
-        .btn-delete:hover {
-            color: var(--primary);
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: var(--accent);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: var(--dark);
-        }
-        
-        footer {
-            background: var(--dark);
-            color: white;
-            text-align: center;
-            padding: 30px 0;
-            margin-top: 50px;
-        }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 8px;
-            color: white;
-            font-weight: 500;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            z-index: 1000;
-            transform: translateX(150%);
-            transition: transform 0.4s ease;
-        }
-        
-        .notification.show {
-            transform: translateX(0);
-        }
-        
-        .notification.success {
-            background-color: #4CAF50;
-        }
-        
-        .notification.error {
-            background-color: #f44336;
-        }
-        
-        @media (max-width: 768px) {
-            .header-content {
-                flex-direction: column;
-                gap: 15px;
-            }
-            
-            .hero h1 {
-                font-size: 2.2rem;
-            }
-            
-            .recipes-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="notification" class="notification hidden"></div>
@@ -362,8 +46,17 @@
             <p>Speichere, organisiere und entdecke deine Lieblingsrezepte an einem Ort. Einfach, schnell und immer griffbereit!</p>
         </section>
         
+        <section id="recipesSection">
+            <h2 class="section-title">Meine Rezepte</h2>
+            <div id="emptyState" class="hero">
+                <h3>Noch keine Rezepte vorhanden</h3>
+                <p>Melde dich an und beginne mit dem Hinzufügen deiner Lieblingsrezepte!</p>
+            </div>
+            <div id="recipesContainer" class="recipes-grid"></div>
+        </section>
+
         <section id="recipeFormSection" class="hidden">
-            <h2 class="section-title">Neues Rezept hinzufügen</h2>
+            <h2 class="section-title" id="recipeFormTitle">Neues Rezept hinzufügen</h2>
             <div class="recipe-form">
                 <div class="form-group">
                     <label for="recipeTitle">Rezeptname</label>
@@ -378,24 +71,33 @@
                     <textarea id="recipeInstructions" class="form-control" placeholder="1. Nudeln kochen...&#10;2. Speck anbraten..."></textarea>
                 </div>
                 <div class="form-group">
-                    <label for="recipeImage">Bild-URL (optional)</label>
-                    <input type="text" id="recipeImage" class="form-control" placeholder="https://...">
+                    <label for="recipeImage">Rezeptbild (optional)</label>
+                    <small class="form-text text-muted" style="display: block; margin-bottom: 5px;">Datei hochladen oder URL eingeben. Upload hat Vorrang.</small>
+                    <input type="file" id="recipeImage" class="form-control" accept="image/*" style="margin-bottom: 10px;">
+                    <input type="text" id="recipeImageUrlText" class="form-control" placeholder="Oder Bild-URL hier einfügen">
+                    <img id="imagePreview" src="#" alt="Vorschau" style="display: none; max-width: 200px; max-height: 200px; margin-top: 10px; border-radius: 8px; object-fit: cover;">
                 </div>
                 <button id="saveRecipeBtn" class="btn btn-primary">
                     <i class="fas fa-save"></i> Rezept speichern
                 </button>
             </div>
         </section>
-        
-        <section id="recipesSection">
-            <h2 class="section-title">Meine Rezepte</h2>
-            <div id="emptyState" class="hero">
-                <h3>Noch keine Rezepte vorhanden</h3>
-                <p>Melde dich an und beginne mit dem Hinzufügen deiner Lieblingsrezepte!</p>
-            </div>
-            <div id="recipesContainer" class="recipes-grid"></div>
-        </section>
     </main>
+
+    <div id="recipeDetailModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="closeModalBtn">&times;</span>
+            <h2 id="modalRecipeTitle"></h2>
+            <img id="modalRecipeImage" src="" alt="Recipe Image" style="width: 100%; max-height: 300px; object-fit: cover; margin-bottom: 20px;">
+            <h3>Zutaten:</h3>
+            <div id="modalRecipeIngredients" style="margin-bottom: 20px;"></div>
+            <h3>Zubereitung:</h3>
+            <div id="modalRecipeInstructions" style="margin-bottom: 20px;"></div>
+            <button id="modalEditRecipeBtn" class="btn btn-primary">
+                <i class="fas fa-edit"></i> Bearbeiten
+            </button>
+        </div>
+    </div>
     
     <footer>
         <div class="container">
@@ -404,6 +106,7 @@
         </div>
     </footer>
 
+    <script src="config.js"></script>
     <script>
         console.log('Debug: Supabase script execution started.');
         console.log('Debug: window.supabase from CDN:', window.supabase);
@@ -413,12 +116,11 @@
         }
 
         // Supabase Initialisierung
-<<<<<<< fix/signin-robustness
-        const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co'; // Ensure these are the correct values
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw'; // Ensure these are the correct values
+        // const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co'; // Ensure these are the correct values
+        // const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw'; // Ensure these are the correct values
 
-        console.log('Debug: Attempting to create Supabase client...');
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey); // Explicitly use window.supabase
+        console.log('Debug: Attempting to create Supabase client using config.js variables...');
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); // Explicitly use window.supabase
         console.log('Debug: Supabase client instance:', supabase);
         if (!supabase) {
             console.error('CRITICAL: Supabase client creation failed! Client object is falsy.');
@@ -434,28 +136,13 @@
         console.log('Debug: Attempting to set up onAuthStateChange listener...');
         supabase.auth.onAuthStateChange((event, session) => {
             console.log('Debug: Auth event:', event, session);
-=======
-        const supabaseUrl = 'https://qzypvpuehgyifixtticm.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF6eXB2cHVlaGd5aWZpeHR0aWNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk4OTg0NzYsImV4cCI6MjA2NTQ3NDQ3Nn0.4WEOW88xZAtD-8_N6cSLHDpqn0kHrA_vmWOeBOK3HZw';
-        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-        // Auth State Change Listener
-        supabase.auth.onAuthStateChange((event, session) => {
-            console.log('Auth event:', event, session); // Optional: for debugging
->>>>>>> main
             if (event === 'SIGNED_IN') {
                 checkAuth(session.user);
             } else if (event === 'SIGNED_OUT') {
                 checkAuth(null);
             }
-<<<<<<< fix/signin-robustness
         });
         console.log('Debug: onAuthStateChange listener setup complete.');
-=======
-            // You might also want to handle 'TOKEN_REFRESHED' if necessary,
-            // though checkAuth(session.user) should generally cover it if the user object is updated.
-        });
->>>>>>> main
         
         // DOM Elemente
         const authSection = document.getElementById('authSection');
@@ -469,6 +156,56 @@
         const emptyState = document.getElementById('emptyState');
         const saveRecipeBtn = document.getElementById('saveRecipeBtn');
         const notification = document.getElementById('notification');
+        const recipeDetailModal = document.getElementById('recipeDetailModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalRecipeTitle = document.getElementById('modalRecipeTitle');
+        const modalRecipeImage = document.getElementById('modalRecipeImage');
+        const modalRecipeIngredients = document.getElementById('modalRecipeIngredients');
+        const modalRecipeInstructions = document.getElementById('modalRecipeInstructions');
+        const modalEditRecipeBtn = document.getElementById('modalEditRecipeBtn');
+        const recipeImageInput = document.getElementById('recipeImage');
+        const imagePreview = document.getElementById('imagePreview');
+        const recipeImageUrlTextInput = document.getElementById('recipeImageUrlText');
+        // recipeFormTitle is defined after DOM parsing, but needed in functions.
+        // Let's ensure it's either passed or defined globally if checkAuth can call prepareFormForAdd before full DOM ready.
+        // However, this script is at the end of body, so DOM should be ready.
+        // const recipeFormTitle = document.getElementById('recipeFormTitle'); // This would be good if not for ordering.
+
+        // Function to prepare form for adding a new recipe
+        function prepareFormForAdd() {
+            document.getElementById('recipeTitle').value = '';
+            document.getElementById('recipeIngredients').value = '';
+            document.getElementById('recipeInstructions').value = '';
+            recipeImageInput.value = null; // Clear the file input
+            if (recipeImageUrlTextInput) recipeImageUrlTextInput.value = ''; // Clear URL text input
+
+            // imagePreview is a global const
+            if (imagePreview) {
+                imagePreview.src = '#';
+                imagePreview.style.display = 'none';
+                delete imagePreview.dataset.existingImageUrl;
+            }
+
+            const formTitleEl = document.getElementById('recipeFormTitle');
+            if (formTitleEl) {
+                formTitleEl.textContent = 'Neues Rezept hinzufügen';
+            } else {
+                console.error('recipeFormTitle element not found during prepareFormForAdd');
+            }
+
+            if (saveRecipeBtn) {
+                 saveRecipeBtn.innerHTML = '<i class="fas fa-save"></i> Rezept speichern';
+                 delete saveRecipeBtn.dataset.editingId;
+            } else {
+                 console.error('saveRecipeBtn not found during prepareFormForAdd');
+            }
+
+            // if (recipeFormSection) { // Line removed - visibility not controlled here
+            //     recipeFormSection.classList.remove('hidden');
+            // } else {
+            //     console.error('recipeFormSection not found during prepareFormForAdd');
+            // }
+        }
         
         // Authentifizierungsstatus überprüfen
         async function checkAuth(userFromSignIn = null) {
@@ -497,7 +234,8 @@
                 // Benutzer angemeldet
                 authSection.classList.add('hidden');
                 userSection.classList.remove('hidden');
-                recipeFormSection.classList.remove('hidden');
+                // recipeFormSection.classList.remove('hidden'); // Replaced by prepareFormForAdd
+                // prepareFormForAdd(); // Line removed - checkAuth no longer shows the form
                 
                 // Benutzerinitialen für Avatar
                 const initials = currentUser.email.substring(0, 1).toUpperCase();
@@ -517,65 +255,234 @@
         
         // Rezepte laden
         async function loadRecipes() {
-            const { data: recipes, error } = await supabase
-                .from('recipes')
-                .select('*')
-                .order('created_at', { ascending: false });
-            
-            if (error) {
-                showNotification('Fehler beim Laden der Rezepte', 'error');
-                console.error(error);
-                return;
+    recipesContainer.innerHTML = ''; // Clear recipes container first
+    console.log("loadRecipes: recipesContainer cleared.");
+
+    // 1. Create and add the "Add Recipe" card
+    const addRecipeCard = document.createElement('div');
+    addRecipeCard.className = 'recipe-card add-recipe-trigger-card'; // New specific class
+    addRecipeCard.id = 'addRecipeTriggerCard'; // For attaching its own event listener later
+    // Inline styles are temporary; will be moved to CSS. min-height is a placeholder.
+    addRecipeCard.innerHTML = `
+        <div class="add-recipe-content" style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; cursor: pointer; min-height: 200px; padding: 20px;">
+            <i class="fas fa-plus" style="font-size: 3rem; color: var(--primary); margin-bottom: 15px;"></i>
+            <span style="font-size: 1.2rem; font-weight: 600; color: var(--dark);">Neues Rezept</span>
+        </div>
+    `;
+    recipesContainer.appendChild(addRecipeCard);
+
+    // ADD EVENT LISTENER FOR THE NEW CARD HERE:
+    const addRecipeTriggerElement = document.getElementById('addRecipeTriggerCard');
+    if (addRecipeTriggerElement) {
+        addRecipeTriggerElement.addEventListener('click', () => {
+            console.log("Add Recipe card clicked."); // For debugging
+            prepareFormForAdd(); // Reset form fields and state (title, button text)
+
+            // prepareFormForAdd no longer makes the form visible. So, do it here:
+            if (recipeFormSection) { // recipeFormSection is a global const
+                recipeFormSection.classList.remove('hidden');
+                recipeFormSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.error("recipeFormSection not found when trying to show it from addRecipeTriggerCard click.");
             }
-            
-            if (recipes.length === 0) {
-                emptyState.classList.remove('hidden');
-                recipesContainer.innerHTML = '';
-                return;
+        });
+    } else {
+        console.error("Failed to find #addRecipeTriggerCard to attach click listener.");
+    }
+
+    // 2. Fetch actual recipes from Supabase
+    const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    console.log("loadRecipes: Recipes fetched from Supabase:", JSON.stringify(recipes, null, 2));
+    console.log("loadRecipes: Number of recipes fetched:", recipes ? recipes.length : 0);
+
+    if (error) {
+        showNotification('Fehler beim Laden der Rezepte', 'error');
+        console.error('Supabase error fetching recipes:', error);
+        emptyState.classList.remove('hidden'); // Show empty state on error
+        // The "Add Recipe" card is still present.
+        return;
+    }
+
+    // 3. Handle display of actual recipes and the emptyState message
+    if (recipes.length === 0) {
+        // No actual recipes found, only the "Add Recipe" card is present.
+        emptyState.classList.remove('hidden');
+    } else {
+        emptyState.classList.add('hidden'); // Hide empty state if there are actual recipes
+
+        recipes.forEach(recipe => {
+            const recipeCardElement = document.createElement('div');
+            recipeCardElement.className = 'recipe-card';
+
+            const imgStyle = recipe.image_url
+                ? `background-image: url('${recipe.image_url}')`
+                : 'background: linear-gradient(135deg, var(--primary), var(--secondary))';
+
+            const ingredientsHtml = recipe.ingredients
+                ? recipe.ingredients.split('\n').filter(ing => ing.trim() !== '').map(ing => `<li>${ing}</li>`).join('')
+                : '<li>Keine Zutaten angegeben</li>';
+
+            recipeCardElement.innerHTML = `
+                <div class="recipe-img" style="${imgStyle}"></div>
+                <div class="recipe-content">
+                    <h3 class="recipe-title">${recipe.title || 'Unbenanntes Rezept'}</h3>
+                    <div class="recipe-ingredients">
+                        <ul>${ingredientsHtml}</ul>
+                    </div>
+                </div>
+                <div class="recipe-actions">
+                    <button class="btn-icon btn-view" data-id="${recipe.id}" aria-label="Rezept ansehen">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn-icon btn-delete" data-id="${recipe.id}" aria-label="Rezept löschen">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            console.log("loadRecipes: Appending recipe card for:", recipe.title, "(ID:", recipe.id + ")");
+            recipesContainer.appendChild(recipeCardElement);
+
+            // Attach event listeners directly to the buttons of this specific card
+            const viewBtn = recipeCardElement.querySelector('.btn-view');
+            if (viewBtn) {
+                viewBtn.addEventListener('click', (e) => {
+                    const recipeId = e.currentTarget.getAttribute('data-id');
+                    displayFullRecipe(recipeId);
+                });
             }
-            
-            emptyState.classList.add('hidden');
-            recipesContainer.innerHTML = '';
-            
-            recipes.forEach(recipe => {
-                const recipeCard = document.createElement('div');
-                recipeCard.className = 'recipe-card';
-                
-                // Bild-Hintergrund setzen, falls vorhanden
-                const imgStyle = recipe.image_url 
-                    ? `background-image: url('${recipe.image_url}')`
-                    : 'background: linear-gradient(135deg, #ff6b6b, #4ecdc4)';
-                
-                // Zutaten formatieren
-                const ingredientsList = recipe.ingredients.split('\n')
-                    .map(ing => `<li>${ing}</li>`)
-                    .join('');
-                
-                recipeCard.innerHTML = `
-                    <div class="recipe-img" style="${imgStyle}"></div>
-                    <div class="recipe-content">
-                        <h3 class="recipe-title">${recipe.title}</h3>
-                        <div class="recipe-ingredients">
-                            <ul>${ingredientsList}</ul>
-                        </div>
-                    </div>
-                    <div class="recipe-actions">
-                        <button class="btn-icon btn-delete" data-id="${recipe.id}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                recipesContainer.appendChild(recipeCard);
-            });
-            
-            // Lösch-Buttons Event-Listener hinzufügen
-            document.querySelectorAll('.btn-delete').forEach(button => {
-                button.addEventListener('click', (e) => {
+
+            const deleteBtn = recipeCardElement.querySelector('.btn-delete');
+            if (deleteBtn) {
+                deleteBtn.addEventListener('click', (e) => {
                     const recipeId = e.currentTarget.getAttribute('data-id');
                     deleteRecipe(recipeId);
                 });
-            });
+            }
+        });
+    }
+    // Note: Old global querySelectorAll for .btn-view and .btn-delete are implicitly removed
+    // because the entire function is being replaced.
+}
+
+        // Vollständiges Rezept anzeigen
+        async function displayFullRecipe(recipeId) {
+            console.log(`displayFullRecipe: Called with recipeId: ${recipeId}`);
+            const { data: recipe, error } = await supabase
+                .from('recipes')
+                .select('*')
+                .eq('id', recipeId)
+                .single();
+
+            console.log("displayFullRecipe: Fetched recipe data:", recipe);
+            console.log("displayFullRecipe: Supabase error object:", error);
+
+            if (error) {
+                showNotification('Fehler beim Laden des Rezepts für die Detailansicht.', 'error');
+                console.error('Error fetching recipe details:', error);
+                console.log("displayFullRecipe: Exiting due to Supabase error.");
+                return;
+            }
+
+            console.log(`displayFullRecipe: Checking if recipe object is valid (truthy). Recipe:`, recipe);
+            if (recipe) {
+                console.log("displayFullRecipe: Recipe object is valid. Attempting to populate modal.");
+                console.log(`displayFullRecipe: Setting title to: ${recipe.title}`);
+                modalRecipeTitle.textContent = recipe.title;
+
+                console.log(`displayFullRecipe: Setting image URL to: ${recipe.image_url}`);
+                if (recipe.image_url) {
+                    modalRecipeImage.src = recipe.image_url;
+                    modalRecipeImage.style.display = 'block';
+                } else {
+                    modalRecipeImage.src = '';
+                    modalRecipeImage.style.display = 'none';
+                }
+
+                console.log(`displayFullRecipe: Setting ingredients. Raw:`, recipe.ingredients);
+                // Zutaten formatieren (Newline-separated to UL)
+                if (recipe.ingredients) {
+                    const ingredientsArray = recipe.ingredients.split('\n').filter(ing => ing.trim() !== '');
+                    modalRecipeIngredients.innerHTML = `<ul>${ingredientsArray.map(ing => `<li>${ing}</li>`).join('')}</ul>`;
+                } else {
+                    modalRecipeIngredients.innerHTML = 'Keine Zutaten angegeben.';
+                }
+
+                console.log(`displayFullRecipe: Setting instructions. Raw:`, recipe.instructions);
+                // Zubereitung formatieren (Newline to <br>)
+                if (recipe.instructions) {
+                    modalRecipeInstructions.innerHTML = recipe.instructions.replace(/\n/g, '<br>');
+                } else {
+                    modalRecipeInstructions.innerHTML = 'Keine Zubereitungsschritte angegeben.';
+                }
+
+                recipeDetailModal.dataset.currentRecipeId = recipe.id;
+                modalEditRecipeBtn.dataset.recipeId = recipe.id; // Store ID for edit button
+
+                console.log("displayFullRecipe: Attempting to show modal by removing 'hidden' class from recipeDetailModal.");
+                recipeDetailModal.classList.remove('hidden');
+                console.log("displayFullRecipe: Modal 'hidden' class removed. Current classes:", recipeDetailModal.classList.toString());
+                console.log("displayFullRecipe: Modal style.display:", window.getComputedStyle(recipeDetailModal).display);
+            } else {
+                console.log("displayFullRecipe: Recipe object was null or undefined, and no Supabase error was reported. Modal will not be shown.");
+                showNotification('Rezept nicht gefunden oder Daten unvollständig.', 'error');
+            }
+        }
+
+        // Formular zum Bearbeiten eines Rezepts vorbereiten
+        function populateFormForEdit(recipe) {
+            document.getElementById('recipeTitle').value = recipe.title;
+            document.getElementById('recipeIngredients').value = recipe.ingredients;
+            document.getElementById('recipeInstructions').value = recipe.instructions;
+
+            // Use global consts: recipeImageInput, recipeImageUrlTextInput, imagePreview
+            if (recipeImageInput) {
+                recipeImageInput.value = null; // Always clear file input when loading a recipe for edit
+            }
+
+            if (recipe.image_url) {
+                if (recipeImageUrlTextInput) {
+                    recipeImageUrlTextInput.value = recipe.image_url;
+                }
+                if (imagePreview) {
+                    imagePreview.src = recipe.image_url;
+                    imagePreview.style.display = 'block';
+                    imagePreview.dataset.existingImageUrl = recipe.image_url;
+                }
+            } else {
+                if (recipeImageUrlTextInput) {
+                    recipeImageUrlTextInput.value = '';
+                }
+                if (imagePreview) {
+                    imagePreview.src = '#';
+                    imagePreview.style.display = 'none';
+                    delete imagePreview.dataset.existingImageUrl;
+                }
+            }
+
+            const formTitleEl = document.getElementById('recipeFormTitle');
+            if (formTitleEl) {
+                formTitleEl.textContent = 'Rezept bearbeiten';
+            } else {
+                console.error('recipeFormTitle element not found during populateFormForEdit');
+            }
+
+            if (saveRecipeBtn) {
+                saveRecipeBtn.innerHTML = '<i class="fas fa-save"></i> Änderungen speichern';
+                saveRecipeBtn.dataset.editingId = recipe.id;
+            } else {
+                console.error('saveRecipeBtn not found during populateFormForEdit');
+            }
+
+            if (recipeFormSection) {
+                recipeFormSection.classList.remove('hidden');
+                recipeFormSection.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                console.error('recipeFormSection not found during populateFormForEdit');
+            }
         }
         
         // Rezept löschen
@@ -596,42 +503,123 @@
             }
         }
         
-        // Neues Rezept speichern
+        // Neues Rezept speichern / Rezept aktualisieren
         async function saveRecipe() {
+            console.log("saveRecipe function called.");
+            console.log("Current editingId:", saveRecipeBtn.dataset.editingId); // saveRecipeBtn is global
+
             const title = document.getElementById('recipeTitle').value;
             const ingredients = document.getElementById('recipeIngredients').value;
             const instructions = document.getElementById('recipeInstructions').value;
-            const imageUrl = document.getElementById('recipeImage').value;
-            
+
+            const editingId = saveRecipeBtn.dataset.editingId;
+            const fileInput = document.getElementById('recipeImage'); // Or use the global const recipeImageInput
+            const selectedFile = fileInput.files[0];
+            let userForOps = null;
+            const recipeImageUrlFromText = recipeImageUrlTextInput.value.trim(); // recipeImageUrlTextInput is global
+
             if (!title || !ingredients || !instructions) {
                 showNotification('Bitte fülle alle Pflichtfelder aus', 'error');
                 return;
             }
-            
-            const { data: { user } } = await supabase.auth.getUser();
-            
-            const { error } = await supabase
-                .from('recipes')
-                .insert([{
-                    title,
-                    ingredients,
-                    instructions,
-                    image_url: imageUrl || null,
-                    user_id: user.id
-                }]);
-            
-            if (error) {
-                showNotification('Fehler beim Speichern des Rezepts', 'error');
-                console.error(error);
+
+            // Fetch user if a new file is being uploaded OR if it's a new recipe (not editingId)
+            // This user object (userForOps) will be used for constructing file path and for user_id in new recipes.
+            if (selectedFile || !editingId) {
+                const { data: authData, error: authUserError } = await supabase.auth.getUser();
+                if (authUserError || !authData.user) {
+                    showNotification('Benutzer nicht authentifiziert. Speichern nicht möglich.', 'error');
+                    console.error('saveRecipe: User not authenticated for operation.', authUserError);
+                    return;
+                }
+                userForOps = authData.user;
+            }
+            // Now userForOps is populated if needed for later ops.
+            // If only editing text fields of an existing recipe without changing image via file/URL text, userForOps might remain null, which is fine for that specific case.
+
+            let finalImageUrl = null;
+
+            if (selectedFile) { // Priority 1: Uploaded file
+                console.log("saveRecipe: New file selected. Uploading...");
+                // userForOps is guaranteed to be populated here due to the check above
+                const userId = userForOps.id;
+                const sanitizedFileName = selectedFile.name.replace(/[^a-zA-Z0-9.\-]/g, '_');
+                const filePath = `${userId}/${Date.now()}-${sanitizedFileName}`;
+
+                console.log(`saveRecipe: Uploading to Supabase Storage at path: ${filePath}`);
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('recipe-images')
+                    .upload(filePath, selectedFile, { cacheControl: '3600', upsert: false });
+
+                if (uploadError) {
+                    showNotification('Fehler beim Hochladen des Bildes.', 'error');
+                    console.error('saveRecipe: Supabase Storage upload error:', uploadError);
+                    return;
+                }
+
+                console.log("saveRecipe: File uploaded successfully. Path:", uploadData.path);
+                const { data: publicUrlResponseData, error: getUrlError } = supabase.storage
+                    .from('recipe-images')
+                    .getPublicUrl(uploadData.path);
+
+                if (getUrlError || !publicUrlResponseData || !publicUrlResponseData.publicUrl) {
+                    showNotification('Fehler beim Abrufen der Bild-URL nach Upload.', 'error');
+                    console.error('saveRecipe: Could not get public URL. Error:', getUrlError, 'Response:', publicUrlResponseData);
+                    // finalImageUrl remains null if URL retrieval fails after successful upload
+                } else {
+                    finalImageUrl = publicUrlResponseData.publicUrl;
+                    console.log("saveRecipe: Uploaded image public URL:", finalImageUrl);
+                }
+            } else if (recipeImageUrlFromText) { // Priority 2: URL from text input
+                console.log("saveRecipe: Using URL from text input:", recipeImageUrlFromText);
+                finalImageUrl = recipeImageUrlFromText;
+            } else if (editingId) { // Priority 3: Existing image (if editing and no new file/URL)
+                // imagePreview is a global const
+                if (imagePreview && imagePreview.dataset.existingImageUrl) {
+                     finalImageUrl = imagePreview.dataset.existingImageUrl;
+                     console.log("saveRecipe: No new input, using existing image URL for edit:", finalImageUrl);
+                } else {
+                    console.log("saveRecipe: No new input, no existing image URL found for edit (or it was cleared).");
+                    finalImageUrl = null; // Image was removed or never existed
+                }
+            }
+            // If it's a new recipe and no file/URL, finalImageUrl remains null.
+
+            if (editingId) {
+                console.log("saveRecipe (update path): Attempting to update recipe. ID:", editingId, "Payload:", { title, ingredients, instructions, image_url: finalImageUrl });
+                const { error } = await supabase
+                    .from('recipes')
+                    .update({ title, ingredients, instructions, image_url: finalImageUrl })
+                    .eq('id', editingId);
+
+                console.log("saveRecipe (update path): Supabase update response - error object:", error);
+
+                if (error) {
+                    showNotification('Fehler beim Aktualisieren des Rezepts', 'error');
+                    console.error('Error updating recipe:', error);
+                    console.log("saveRecipe (update error path): Update failed.");
+                } else {
+                    showNotification('Rezept erfolgreich aktualisiert!', 'success');
+                    console.log("saveRecipe (update success path): Update successful.");
+                    loadRecipes();
+                }
+                prepareFormForAdd(); // Reset form and keep it visible
             } else {
-                // Formular zurücksetzen
-                document.getElementById('recipeTitle').value = '';
-                document.getElementById('recipeIngredients').value = '';
-                document.getElementById('recipeInstructions').value = '';
-                document.getElementById('recipeImage').value = '';
-                
-                showNotification('Rezept erfolgreich gespeichert!', 'success');
-                loadRecipes();
+                // This is the insert path; userForOps must be defined
+                console.log("saveRecipe (insert path): Attempting to insert new recipe. Payload:", { title, ingredients, instructions, image_url: finalImageUrl, user_id: userForOps.id });
+                const { error } = await supabase
+                    .from('recipes')
+                    .insert([{ title, ingredients, instructions, image_url: finalImageUrl, user_id: userForOps.id }]);
+
+                if (error) {
+                    showNotification('Fehler beim Speichern des Rezepts', 'error');
+                    console.error('Error inserting recipe:', error);
+                } else {
+                    showNotification('Rezept erfolgreich gespeichert!', 'success');
+                    loadRecipes();
+                    prepareFormForAdd(); // Resets form content
+                    recipeFormSection.classList.add('hidden'); // Explicitly hide the form
+                }
             }
         }
         
@@ -695,6 +683,97 @@
         });
         
         saveRecipeBtn.addEventListener('click', saveRecipe);
+
+        // Modal Schließen Event Listeners
+        closeModalBtn.addEventListener('click', () => {
+            recipeDetailModal.classList.add('hidden');
+        });
+
+        recipeDetailModal.addEventListener('click', (event) => {
+            if (event.target === recipeDetailModal) { // Click on backdrop
+                recipeDetailModal.classList.add('hidden');
+            }
+        });
+
+        // Event Listener für Modal Edit Button
+        if (modalEditRecipeBtn) {
+            modalEditRecipeBtn.addEventListener('click', async () => {
+                const recipeId = modalEditRecipeBtn.dataset.recipeId;
+                if (!recipeId) {
+                    showNotification('Fehler: Rezept-ID nicht gefunden für Bearbeitung.', 'error');
+                    console.error('Recipe ID not found on modalEditRecipeBtn dataset.');
+                    return;
+                }
+
+                const { data: recipe, error } = await supabase
+                    .from('recipes')
+                    .select('*')
+                    .eq('id', recipeId)
+                    .single();
+
+                if (error || !recipe) {
+                    showNotification('Fehler beim Abrufen des Rezepts zum Bearbeiten.', 'error');
+                    console.error('Error fetching recipe for edit:', error);
+                    return;
+                }
+
+                populateFormForEdit(recipe);
+                recipeDetailModal.classList.add('hidden'); // Close the modal
+            });
+        } else {
+            console.error('modalEditRecipeBtn not found in the DOM.');
+        }
+
+        // Event Listener for Image Preview (File Input)
+        if (recipeImageInput && imagePreview) {
+            recipeImageInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block'; // Show the preview
+                        delete imagePreview.dataset.existingImageUrl; // New file overrides existing URL
+                    }
+                    reader.readAsDataURL(file);
+                    if (recipeImageUrlTextInput) {
+                        recipeImageUrlTextInput.value = ''; // Clear URL input if file is chosen
+                    }
+                } else {
+                    // No file selected or selection cleared - hide preview ONLY if URL field is also empty
+                    if (!recipeImageUrlTextInput || !recipeImageUrlTextInput.value.trim()) {
+                        imagePreview.src = '#'; // Reset src
+                        imagePreview.style.display = 'none'; // Hide the preview
+                        delete imagePreview.dataset.existingImageUrl;
+                    }
+                }
+            });
+        } else {
+            if (!recipeImageInput) console.error("recipeImage input (file) not found");
+            if (!imagePreview) console.error("imagePreview img tag not found");
+        }
+
+        // Event Listener for Image URL Text Input
+        if (recipeImageUrlTextInput && imagePreview && recipeImageInput) {
+            recipeImageUrlTextInput.addEventListener('input', function(event) {
+                const imageUrl = event.target.value.trim();
+                if (imageUrl && (imageUrl.startsWith('http://') || imageUrl.startsWith('https://'))) {
+                    imagePreview.src = imageUrl;
+                    imagePreview.style.display = 'block';
+                    recipeImageInput.value = null; // Clear the file input if a URL is typed
+                    imagePreview.dataset.existingImageUrl = imageUrl; // This URL is now the one to consider
+                } else if (!imageUrl) { // URL input is empty
+                    delete imagePreview.dataset.existingImageUrl;
+                    if (recipeImageInput.files.length === 0) { // And no file is selected
+                        imagePreview.src = '#';
+                        imagePreview.style.display = 'none';
+                    }
+                    // If a file IS selected, its preview remains.
+                }
+            });
+        } else {
+            if (!recipeImageUrlTextInput) console.error("recipeImageUrlTextInput input not found");
+        }
         
         // Initiale Überprüfung des Authentifizierungsstatus
         checkAuth();
