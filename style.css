@@ -499,34 +499,49 @@
     cursor: pointer;
 }
 
+/* Updated Auth Tab Styling */
 .auth-tabs {
     display: flex;
-    margin-bottom: 25px;
-    border-bottom: 1px solid var(--gray);
+    margin-bottom: 30px; /* Increased space below tabs */
+    /* Removed border-bottom: 1px solid var(--gray); for a cleaner look */
+    border-radius: 8px; /* Optional: if you want to contain tabs in a rounded element */
+    /* background-color: #f0f0f0; */ /* Optional: light background for the tab container */
+    overflow: hidden; /* If using rounded corners on container and want to clip tab highlights */
 }
 
 .auth-tab-btn {
     flex: 1;
-    padding: 12px 10px;
-    background: none;
-    border: none;
-    font-size: 1.05rem; /* Slightly adjusted font size */
-    font-weight: 600;
-    color: var(--dark);
+    padding: 14px 10px; /* Adjusted padding for a taller tab */
+    background-color: transparent; /* Explicitly transparent */
+    border: none; /* Remove all borders */
+    border-bottom: 2px solid var(--gray); /* Subtle underline for inactive tabs */
+    font-size: 1rem; /* Standardized font size */
+    font-weight: 500; /* Medium weight for inactive tabs */
+    color: #666; /* Lighter color for inactive tabs */
     cursor: pointer;
-    transition: color 0.3s, border-bottom-color 0.3s;
-    border-bottom: 3px solid transparent; /* For active state indicator */
-    margin-bottom: -1px; /* Overlap with container's border-bottom for seamless look */
-}
-
-.auth-tab-btn.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
+    transition: color 0.2s ease-in-out, border-bottom-color 0.2s ease-in-out, background-color 0.2s ease-in-out;
+    text-align: center;
+    position: relative; /* For potential future pseudo-elements or animations */
 }
 
 .auth-tab-btn:not(.active):hover {
-    color: var(--secondary);
+    color: var(--secondary); /* Darken text on hover */
+    border-bottom-color: var(--secondary); /* Change border color on hover */
+    background-color: rgba(78, 205, 196, 0.05); /* Very subtle background hover */
 }
+
+.auth-tab-btn.active {
+    font-weight: 700; /* Bolder for active tab */
+    color: var(--primary);
+    border-bottom: 3px solid var(--primary); /* Prominent underline for active tab */
+    /* background-color: rgba(255, 107, 107, 0.05); */ /* Optional: subtle background for active tab */
+}
+
+/* Remove margin-bottom if it was specifically for overlapping the old border */
+.auth-tab-btn {
+    /* margin-bottom: -1px; */ /* Removed this as the container border is gone */
+}
+
 
 .auth-form h2 { /* Styling for "Anmelden" / "Registrieren" */
     font-size: 1.7rem; /* Adjusted size */
