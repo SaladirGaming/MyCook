@@ -98,6 +98,49 @@
             </button>
         </div>
     </div>
+
+    <!-- Auth Modal -->
+    <div id="authModal" class="modal hidden">
+        <div class="modal-content auth-modal-content">
+            <span class="close-btn" id="closeAuthModalBtn">&times;</span>
+            <div class="auth-tabs">
+                <button id="showSignInTab" class="auth-tab-btn active" data-form="signInForm">Anmelden</button>
+                <button id="showSignUpTab" class="auth-tab-btn" data-form="signUpForm">Registrieren</button>
+            </div>
+
+            <!-- Sign In Form -->
+            <form id="signInForm" class="auth-form">
+                <h2>Anmelden</h2>
+                <div class="form-group">
+                    <label for="signInEmail">E-Mail</label>
+                    <input type="email" id="signInEmail" class="form-control" required placeholder="deine.email@beispiel.com">
+                </div>
+                <div class="form-group">
+                    <label for="signInPassword">Passwort</label>
+                    <input type="password" id="signInPassword" class="form-control" required placeholder="Dein Passwort">
+                </div>
+                <button type="submit" id="signInSubmitBtn" class="btn btn-primary btn-block">
+                    <i class="fas fa-sign-in-alt"></i> Anmelden
+                </button>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form id="signUpForm" class="auth-form hidden">
+                <h2>Registrieren</h2>
+                <div class="form-group">
+                    <label for="signUpEmail">E-Mail</label>
+                    <input type="email" id="signUpEmail" class="form-control" required placeholder="deine.email@beispiel.com">
+                </div>
+                <div class="form-group">
+                    <label for="signUpPassword">Passwort</label>
+                    <input type="password" id="signUpPassword" class="form-control" required placeholder="Wähle ein sicheres Passwort">
+                </div>
+                <button type="submit" id="signUpSubmitBtn" class="btn btn-primary btn-block">
+                    <i class="fas fa-user-plus"></i> Registrieren
+                </button>
+            </form>
+        </div>
+    </div>
     
     <footer>
         <div class="container">
@@ -170,6 +213,34 @@
         // Let's ensure it's either passed or defined globally if checkAuth can call prepareFormForAdd before full DOM ready.
         // However, this script is at the end of body, so DOM should be ready.
         // const recipeFormTitle = document.getElementById('recipeFormTitle'); // This would be good if not for ordering.
+
+        // NEW Auth Modal DOM Elements
+        const authModal = document.getElementById('authModal');
+        const closeAuthModalBtn = document.getElementById('closeAuthModalBtn');
+        const showSignInTab = document.getElementById('showSignInTab');
+        const showSignUpTab = document.getElementById('showSignUpTab');
+        const signInForm = document.getElementById('signInForm');
+        const signUpForm = document.getElementById('signUpForm');
+        const signInEmailInput = document.getElementById('signInEmail');
+        const signInPasswordInput = document.getElementById('signInPassword');
+        const signUpEmailInput = document.getElementById('signUpEmail');
+        const signUpPasswordInput = document.getElementById('signUpPassword');
+
+
+        // Function to switch between Sign In and Sign Up tabs/forms
+        function switchAuthTab(formToShowId) {
+            if (formToShowId === 'signInForm') {
+                signInForm.classList.remove('hidden');
+                signUpForm.classList.add('hidden');
+                showSignInTab.classList.add('active');
+                showSignUpTab.classList.remove('active');
+            } else {
+                signUpForm.classList.remove('hidden');
+                signInForm.classList.add('hidden');
+                showSignUpTab.classList.add('active');
+                showSignInTab.classList.remove('active');
+            }
+        }
 
         // Function to prepare form for adding a new recipe
         function prepareFormForAdd() {
@@ -634,42 +705,25 @@
         }
         
         // Event Listener
-        signUpBtn.addEventListener('click', async () => {
-            const email = prompt('Bitte gib deine E-Mail-Adresse ein:');
-            const password = prompt('Bitte wähle ein Passwort:');
-            
-            if (email && password) {
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password
-                });
-                
-                if (error) {
-                    showNotification(`Registrierung fehlgeschlagen: ${error.message}`, 'error');
-                } else {
-                    showNotification('Registrierung erfolgreich! Bitte überprüfe deine E-Mails.', 'success');
-                }
-            }
+
+        // MODIFIED Header Sign Up Button
+        signUpBtn.addEventListener('click', () => {
+            authModal.classList.remove('hidden');
+            switchAuthTab('signUpForm');
+            signUpEmailInput.value = '';
+            signUpPasswordInput.value = '';
+            signInEmailInput.value = ''; // Also clear other form in case it was active
+            signInPasswordInput.value = '';
         });
-        
-        signInBtn.addEventListener('click', async () => {
-            const email = prompt('Bitte gib deine E-Mail-Adresse ein:');
-            const password = prompt('Bitte gib dein Passwort ein:');
-            
-            if (email && password) {
-                const { data, error } = await supabase.auth.signInWithPassword({
-                    email,
-                    password
-                });
-                
-                if (error) {
-                    showNotification(`Anmeldung fehlgeschlagen: ${error.message}`, 'error');
-                } else {
-                    showNotification('Erfolgreich angemeldet!', 'success');
-                    // Pass the user object directly to checkAuth
-                    checkAuth(data.user);
-                }
-            }
+
+        // MODIFIED Header Sign In Button
+        signInBtn.addEventListener('click', () => {
+            authModal.classList.remove('hidden');
+            switchAuthTab('signInForm');
+            signInEmailInput.value = '';
+            signInPasswordInput.value = '';
+            signUpEmailInput.value = ''; // Also clear other form
+            signUpPasswordInput.value = '';
         });
         
         signOutBtn.addEventListener('click', async () => {
@@ -684,7 +738,75 @@
         
         saveRecipeBtn.addEventListener('click', saveRecipe);
 
-        // Modal Schließen Event Listeners
+        // Auth Modal Event Listeners
+        if (closeAuthModalBtn) {
+            closeAuthModalBtn.addEventListener('click', () => {
+                authModal.classList.add('hidden');
+            });
+        }
+
+        if (authModal) {
+            authModal.addEventListener('click', (event) => {
+                if (event.target === authModal) { // Click on backdrop
+                    authModal.classList.add('hidden');
+                }
+            });
+        }
+
+        if (showSignInTab) {
+            showSignInTab.addEventListener('click', () => switchAuthTab('signInForm'));
+        }
+        if (showSignUpTab) {
+            showSignUpTab.addEventListener('click', () => switchAuthTab('signUpForm'));
+        }
+
+        // Auth Form Submission
+        if (signInForm) {
+            signInForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const email = signInEmailInput.value;
+                const password = signInPasswordInput.value;
+
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    showNotification(`Anmeldung fehlgeschlagen: ${error.message}`, 'error');
+                } else {
+                    showNotification('Erfolgreich angemeldet!', 'success');
+                    authModal.classList.add('hidden');
+                    checkAuth(data.user); // Pass user data to checkAuth
+                }
+                signInEmailInput.value = '';
+                signInPasswordInput.value = '';
+            });
+        }
+
+        if (signUpForm) {
+            signUpForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+                const email = signUpEmailInput.value;
+                const password = signUpPasswordInput.value;
+
+                const { data, error } = await supabase.auth.signUp({ email, password });
+
+                if (error) {
+                    showNotification(`Registrierung fehlgeschlagen: ${error.message}`, 'error');
+                } else {
+                    showNotification('Registrierung erfolgreich! Bitte überprüfe deine E-Mails.', 'success');
+                    authModal.classList.add('hidden');
+                    // On successful sign-up, Supabase often sends a confirmation email.
+                    // The user might not be "signed in" immediately until confirmation,
+                    // so calling checkAuth() without user data is appropriate here.
+                    // Or, if auto-confirm is on / new user is returned, data.user might exist.
+                    // For this setup, we'll assume confirmation is needed or handled by onAuthStateChange.
+                    checkAuth(data.user); // if user is returned directly and session starts
+                }
+                signUpEmailInput.value = '';
+                signUpPasswordInput.value = '';
+            });
+        }
+
+        // Recipe Detail Modal Schließen Event Listeners (original)
         closeModalBtn.addEventListener('click', () => {
             recipeDetailModal.classList.add('hidden');
         });

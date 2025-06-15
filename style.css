@@ -351,6 +351,29 @@
         }
 
         @media (max-width: 768px) {
+            #authModal .auth-modal-content {
+                margin: 5% auto;
+                padding: 25px 20px; /* Smaller padding on small screens */
+                width: 95%;
+            }
+
+            .auth-tab-btn {
+                font-size: 1rem;
+            }
+
+            .auth-form h2 {
+                font-size: 1.5rem;
+            }
+
+            #authModal .form-control {
+                padding: 10px 10px;
+            }
+
+            #authModal .btn-block {
+                font-size: 1rem;
+                padding: 11px;
+            }
+
             .header-content {
                 flex-direction: column;
                 gap: 15px;
@@ -435,3 +458,119 @@
             margin-bottom: 10px; /* Space below the subheading, before the content */
             font-weight: 600; /* Medium boldness */
         }
+
+/* Authentication Modal Styles */
+/* Ensure modal itself is hidden by default using the .hidden class (already defined) */
+/* The .modal class provides basic backdrop and positioning */
+/* We use #authModal to give higher specificity and avoid conflicts with #recipeDetailModal */
+
+#authModal { /* Targets the specific auth modal */
+    /* Uses .modal base styles for backdrop, initial display (block but hidden), z-index etc. */
+    /* .hidden class (display: none !important) will be toggled by JS to show/hide */
+}
+
+#authModal .auth-modal-content { /* Specific to auth modal's content area */
+    background-color: #fefefe;
+    margin: 8% auto; /* Slightly higher than generic modal for forms */
+    padding: 30px 35px; /* Adjusted padding */
+    border: 1px solid #888;
+    width: 90%; /* Responsive width */
+    max-width: 420px; /* Max width for typical auth forms */
+    border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.35);
+    position: relative;
+    text-align: center; /* Center tabs and form titles */
+}
+
+#authModal .close-btn { /* Style for the close button inside auth modal */
+    color: #aaa;
+    position: absolute; /* Position relative to .auth-modal-content */
+    top: 10px;
+    right: 15px;
+    font-size: 28px;
+    font-weight: bold;
+    line-height: 1; /* Ensure it doesn't affect layout too much */
+}
+
+#authModal .close-btn:hover,
+#authModal .close-btn:focus {
+    color: var(--dark);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.auth-tabs {
+    display: flex;
+    margin-bottom: 25px;
+    border-bottom: 1px solid var(--gray);
+}
+
+.auth-tab-btn {
+    flex: 1;
+    padding: 12px 10px;
+    background: none;
+    border: none;
+    font-size: 1.05rem; /* Slightly adjusted font size */
+    font-weight: 600;
+    color: var(--dark);
+    cursor: pointer;
+    transition: color 0.3s, border-bottom-color 0.3s;
+    border-bottom: 3px solid transparent; /* For active state indicator */
+    margin-bottom: -1px; /* Overlap with container's border-bottom for seamless look */
+}
+
+.auth-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+.auth-tab-btn:not(.active):hover {
+    color: var(--secondary);
+}
+
+.auth-form h2 { /* Styling for "Anmelden" / "Registrieren" */
+    font-size: 1.7rem; /* Adjusted size */
+    margin-bottom: 25px;
+    color: var(--dark);
+    font-weight: 600;
+}
+
+#authModal .form-group { /* Specific to auth modal forms' groups */
+    text-align: left; /* Align labels and inputs left */
+    margin-bottom: 18px;
+}
+
+#authModal .form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500; /* Slightly less bold than general labels */
+    font-size: 0.9rem;
+    color: #555;
+}
+
+#authModal .form-control { /* Specific to auth modal inputs */
+    width: 100%;
+    padding: 11px 12px; /* Adjusted padding */
+    border: 1px solid var(--gray);
+    border-radius: 6px; /* Slightly less rounded */
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#authModal .form-control:focus {
+    border-color: var(--secondary);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(78, 205, 196, 0.25); /* Adjusted shadow */
+}
+
+#authModal .btn-block { /* For Sign In / Sign Up buttons */
+    display: block;
+    width: 100%;
+    padding: 12px;
+    font-size: 1.05rem; /* Adjusted font size */
+    font-weight: bold;
+    margin-top: 15px; /* Space above the main button */
+    border-radius: 6px; /* Match input fields */
+}
+/* Ensure .hidden class is available to hide modal by default */
+/* .hidden { display: none !important; } is already globally defined */
